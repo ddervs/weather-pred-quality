@@ -22,11 +22,11 @@ but only after everything works privately** (his explicit preference, 2026-07-04
   (ensembles only on 00Z/12Z runs), commits gzipped JSON to `data/raw/{source}/{date}/{HHMM}Z.json.gz`.
   Sources: `ukmo_forecast`, `ukmo_ensemble`, `land_obs`, `ea_rain`, `metar`.
   Secret `MET_OFFICE_LAND_OBS_API_KEY` is set in the repo (also in local `.env`).
-- Backfill (`scripts/backfill_ukmo.py`): `data/backfill/prev_runs/` (UKMO leads 0–5 d,
-  2024-01-01..2026-06-30) + `data/backfill/era5/` (truth), chunked
-  `{start}_{end}_c{ci}.json.gz`. Smoke test: `scripts/smoke_metrics.py` — MAE/bias by
-  lead vs ERA5; results in docs/06-smoke-test.md (if that file is missing, the smoke
-  test hasn't been run/committed yet — do it first).
+- Backfill DONE (`scripts/backfill_ukmo.py`): `data/backfill/prev_runs/` (UKMO leads
+  0–5 d, 2024-01-01..2026-06-30, 30 files) + `data/backfill/era5/` (truth, 15 files),
+  chunked `{start}_{end}_c{ci}.json.gz`, 13.8 MB total. Smoke test PASSED — pipeline
+  verified, results + gotchas in docs/06-smoke-test.md (temp MAE 0.70→1.63 °C over
+  leads 0→5). Keep "error grows with lead" as a permanent regression check.
 - Station map: `docs/station-map.html/.png`, regenerate via
   `uv run scripts/make_station_map.py --screenshot` when the registry changes.
 
@@ -36,7 +36,8 @@ but only after everything works privately** (his explicit preference, 2026-07-04
   which is `stations.json` order (or chunks of it: backfill uses `CHUNK_SIZE = 11`,
   chunk `ci` = `stations[ci*11:(ci+1)*11]`). No station id in the response — join by position.
 - Open-Meteo previous-runs: `var_previous_dayN` = value predicted ~N×24 h before valid
-  time. Only deterministic runs; lead granularity is daily.
+  time. Only deterministic runs; lead granularity is daily. **Lead 0 comes back under the
+  plain variable name** (`temperature_2m`), not `_previous_day0` (that key is absent).
 - Live `ukmo_forecast` files: init/issue time is NOT in the payload; approximate lead as
   `valid_time − fetch_time` (fetch time = filename). Good enough at 6 h cadence; note it.
 - `land_obs` files: `{geohash: [48 hourly entries] | null}`; entries have `datetime`,

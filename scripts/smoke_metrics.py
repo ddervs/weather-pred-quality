@@ -32,6 +32,11 @@ def hour_index(iso: str) -> int:
     return int((datetime.fromisoformat(iso) - T0).total_seconds() // 3600)
 
 
+def lead_key(var: str, day: int) -> str:
+    # previous-runs API returns day0 under the plain variable name, not *_previous_day0
+    return var if day == 0 else f"{var}_previous_day{day}"
+
+
 def load_series(source: str, keys: list[str]) -> dict:
     """-> {station_id: {key: [value or None]*N_HOURS}}"""
     stations = load_stations()
@@ -63,7 +68,7 @@ def load_series(source: str, keys: list[str]) -> dict:
 
 
 def main() -> None:
-    fcst_keys = [f"{v}_previous_day{d}" for v in VARS for d in LEADS]
+    fcst_keys = [lead_key(v, d) for v in VARS for d in LEADS]
     print("loading forecasts...")
     fcst = load_series("prev_runs", fcst_keys)
     print("loading ERA5 truth...")
@@ -76,10 +81,12 @@ def main() -> None:
         abs_w = n_w = 0.0
         hits = misses = false_al = corr_neg = 0
         for sid in fcst:
-            ft = fcst[sid][f"temperature_2m_previous_day{d}"]
-            fw = fcst[sid][f"wind_speed_10m_previous_day{d}"]
-            fp = fcst[sid][f"precipitation_previous_day{d}"]
-            tt, tw, tp = (truth[sid][v] for v in VARS)
+            ft = fcst[sid][lead_key("temperature_2m", d)]
+            fw = fcst[sid][lead_key("wind_speed_10m", d)]
+            fp = fcst[sid][lead_key("precipitation", d)]
+            tt = truth[sid]["temperature_2m"]
+            tw = truth[sid]["wind_speed_10m"]
+            tp = truth[sid]["precipitation"]
             for i in range(N_HOURS):
                 if ft[i] is not None and tt[i] is not None:
                     err = ft[i] - tt[i]
