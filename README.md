@@ -8,9 +8,18 @@ them against station observations, and scores providers on accuracy *and* honest
 North star: a UK map serving calibrated probabilistic forecasts with
 conformal-prediction-backed reliability guarantees.
 
-## Status: research phase
+## Status: v1 collector live
 
-No pipeline exists yet. The research deliverables are in [`docs/`](docs/):
+- [`data/stations.json`](data/stations.json) — 33 health-checked verification locations
+  (Met Office land-obs station + EA rain gauge + METAR airport triples)
+- [`wpq/`](wpq/) — collector fetching UKMO forecasts + MOGREPS ensembles (via Open-Meteo),
+  Met Office observations, EA rain gauges and METARs into `data/raw/` as gzipped JSON,
+  every 6 h via [GitHub Actions](.github/workflows/collect.yml) (ensembles at 00Z/12Z)
+- [`scripts/backfill_ukmo.py`](scripts/backfill_ukmo.py) — one-off 2024→now backfill of
+  lead-stratified UKMO forecasts + ERA5 truth; [`scripts/smoke_metrics.py`](scripts/smoke_metrics.py)
+  sanity-checks skill-vs-lead on it
+
+Research docs are in [`docs/`](docs/):
 start with [`docs/00-overview.md`](docs/00-overview.md) (TL;DR + decisions needed),
 then data sources, prior art, metrics/calibration, architecture options, and costs.
 
