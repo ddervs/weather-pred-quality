@@ -1,0 +1,44 @@
+name: collect
+
+on:
+  schedule:
+    # 20-min offset avoids the top-of-hour GitHub cron rush; hours 0/12 include ensembles
+    # (wpq.collect gates ensembles on UTC hour 0,1,12,13 so modest cron delay is tolerated)
+    - cron: "20 0,6,12,18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - run: uv sync --frozen
+
+      - name: Collect forecasts and observations
+        env:
+          MET_OFFICE_LAND_OBS_API_KEY: ${{ secrets.MET_OFFICE_LAND_OBS_API_KEY }}
+        run: uv run python -m wpq.collect
+
+      - name: Commit raw data
+        run: |
+          git config user.name "wpq-collector"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/raw
+          if git diff --cached --quiet; then
+            echo "nothing new"
+          else
+            git commit -m "collect: $(date -u +%FT%H%MZ)"
+            git pull --rebase origin main
+            git push
+          fi

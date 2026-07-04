@@ -1,0 +1,564 @@
+{
+ "built_at": "2026-07-04T20:25:59+00:00",
+ "notes": "Fixed verification locations. Do not move stations casually - continuity matters.",
+ "stations": [
+  {
+   "id": "gfnmmy",
+   "seed_city": "Aberdeen",
+   "lat": 57.2086,
+   "lon": -2.2028,
+   "area": "Aberdeen",
+   "region": "gr",
+   "country": "Scotland",
+   "ea_gauge": null,
+   "metar": {
+    "icao": "EGPD",
+    "distance_km": 0.8
+   }
+  },
+  {
+   "id": "gckyur",
+   "seed_city": "Bangor",
+   "lat": 53.259,
+   "lon": -4.3781,
+   "area": "Isle of Anglesey",
+   "region": "wl",
+   "country": "Wales",
+   "ea_gauge": null,
+   "metar": null
+  },
+  {
+   "id": "gcewfr",
+   "seed_city": "Belfast",
+   "lat": 54.6652,
+   "lon": -6.2238,
+   "area": "County Antrim",
+   "region": "ni",
+   "country": "Northern Ireland",
+   "ea_gauge": null,
+   "metar": {
+    "icao": "EGAA",
+    "distance_km": 1.0
+   }
+  },
+  {
+   "id": "gcqf99",
+   "seed_city": "Birmingham",
+   "lat": 52.4789,
+   "lon": -1.6864,
+   "area": "Warwickshire",
+   "region": "wm",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "3340",
+    "lat": 52.446032,
+    "lon": -1.746153,
+    "distance_km": 5.5
+   },
+   "metar": {
+    "icao": "EGBB",
+    "distance_km": 5.0
+   }
+  },
+  {
+   "id": "gcpc1q",
+   "seed_city": "Brighton",
+   "lat": 50.8365,
+   "lon": -0.2911,
+   "area": "West Sussex",
+   "region": "se",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "2321SO",
+    "lat": 50.83729,
+    "lon": -0.377415,
+    "distance_km": 6.1
+   },
+   "metar": {
+    "icao": "EGKA",
+    "distance_km": 0.4
+   }
+  },
+  {
+   "id": "gcnjmb",
+   "seed_city": "Bristol",
+   "lat": 51.5506,
+   "lon": -2.5543,
+   "area": "South Gloucestershire",
+   "region": "sw",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "E6340",
+    "lat": 51.553112,
+    "lon": -2.55595,
+    "distance_km": 0.3
+   },
+   "metar": {
+    "icao": "EGGD",
+    "distance_km": 21.9
+   }
+  },
+  {
+   "id": "gcr9j7",
+   "seed_city": "Cambridge",
+   "lat": 52.2263,
+   "lon": -0.4669,
+   "area": "Bedford",
+   "region": "ee",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "E5731",
+    "lat": 52.226854,
+    "lon": -0.464875,
+    "distance_km": 0.2
+   },
+   "metar": null
+  },
+  {
+   "id": "gcjs3t",
+   "seed_city": "Cardiff",
+   "lat": 51.4023,
+   "lon": -3.4442,
+   "area": "Vale of Glamorgan",
+   "region": "wl",
+   "country": "Wales",
+   "ea_gauge": {
+    "station_reference": "51124",
+    "lat": 51.207152,
+    "lon": -3.536655,
+    "distance_km": 22.6
+   },
+   "metar": {
+    "icao": "EGFF",
+    "distance_km": 7.0
+   }
+  },
+  {
+   "id": "gcvbs8",
+   "seed_city": "Carlisle",
+   "lat": 54.9344,
+   "lon": -2.9608,
+   "area": "Cumbria",
+   "region": "nw",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "606299",
+    "lat": 54.899013,
+    "lon": -2.953493,
+    "distance_km": 4.0
+   },
+   "metar": null
+  },
+  {
+   "id": "gcg1cc",
+   "seed_city": "Derry",
+   "lat": 55.1596,
+   "lon": -6.9489,
+   "area": "County Londonderry",
+   "region": "ni",
+   "country": "Northern Ireland",
+   "ea_gauge": null,
+   "metar": null
+  },
+  {
+   "id": "u10fys",
+   "seed_city": "Dover",
+   "lat": 51.1331,
+   "lon": 1.3458,
+   "area": "Kent",
+   "region": "se",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "1403SE",
+    "lat": 51.130603,
+    "lon": 1.318089,
+    "distance_km": 2.0
+   },
+   "metar": {
+    "icao": "EGMD",
+    "distance_km": 34.6
+   }
+  },
+  {
+   "id": "gcvw5v",
+   "seed_city": "Edinburgh",
+   "lat": 55.9286,
+   "lon": -3.3453,
+   "area": "Edinburgh",
+   "region": "dg",
+   "country": "Scotland",
+   "ea_gauge": null,
+   "metar": {
+    "icao": "EGPH",
+    "distance_km": 2.9
+   }
+  },
+  {
+   "id": "gcj8ds",
+   "seed_city": "Exeter",
+   "lat": 50.7376,
+   "lon": -3.4003,
+   "area": "Devon",
+   "region": "sw",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "45184",
+    "lat": 50.728619,
+    "lon": -3.475599,
+    "distance_km": 5.4
+   },
+   "metar": {
+    "icao": "EGTE",
+    "distance_km": 1.0
+   }
+  },
+  {
+   "id": "gfh7qb",
+   "seed_city": "Fort William",
+   "lat": 56.824,
+   "lon": -4.9713,
+   "area": "Highland",
+   "region": "he",
+   "country": "Scotland",
+   "ea_gauge": null,
+   "metar": null
+  },
+  {
+   "id": "gcuy0c",
+   "seed_city": "Glasgow",
+   "lat": 55.9067,
+   "lon": -4.5319,
+   "area": "Renfrewshire",
+   "region": "st",
+   "country": "Scotland",
+   "ea_gauge": null,
+   "metar": {
+    "icao": "EGPF",
+    "distance_km": 7.3
+   }
+  },
+  {
+   "id": "gcxdqn",
+   "seed_city": "Hull",
+   "lat": 53.8687,
+   "lon": -0.434,
+   "area": "East Riding of Yorkshire",
+   "region": "yh",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "041238",
+    "lat": 53.867134,
+    "lon": -0.367439,
+    "distance_km": 4.4
+   },
+   "metar": {
+    "icao": "EGNJ",
+    "distance_km": 33.2
+   }
+  },
+  {
+   "id": "gfjm2y",
+   "seed_city": "Inverness",
+   "lat": 57.2086,
+   "lon": -3.8287,
+   "area": "Highland",
+   "region": "he",
+   "country": "Scotland",
+   "ea_gauge": null,
+   "metar": {
+    "icao": "EGPE",
+    "distance_km": 39.4
+   }
+  },
+  {
+   "id": "gcwdje",
+   "seed_city": "Leeds",
+   "lat": 53.8083,
+   "lon": -1.8622,
+   "area": "West Yorkshire",
+   "region": "yh",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "075497",
+    "lat": 53.815189,
+    "lon": -1.823015,
+    "distance_km": 2.7
+   },
+   "metar": {
+    "icao": "EGNM",
+    "distance_km": 14.7
+   }
+  },
+  {
+   "id": "gcrws0",
+   "seed_city": "Lincoln",
+   "lat": 53.1766,
+   "lon": -0.5219,
+   "area": "Lincolnshire",
+   "region": "em",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "E5721",
+    "lat": 53.175194,
+    "lon": -0.524002,
+    "distance_km": 0.2
+   },
+   "metar": {
+    "icao": "EGXW",
+    "distance_km": 1.2
+   }
+  },
+  {
+   "id": "gctb66",
+   "seed_city": "Liverpool",
+   "lat": 53.4952,
+   "lon": -3.0597,
+   "area": "Merseyside",
+   "region": "nw",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "550148",
+    "lat": 53.410189,
+    "lon": -3.10942,
+    "distance_km": 10.0
+   },
+   "metar": {
+    "icao": "EGGP",
+    "distance_km": 22.7
+   }
+  },
+  {
+   "id": "gcpsvg",
+   "seed_city": "London-Heathrow",
+   "lat": 51.4792,
+   "lon": -0.4449,
+   "area": "Greater London",
+   "region": "se",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "247540TP",
+    "lat": 51.479469,
+    "lon": -0.451216,
+    "distance_km": 0.4
+   },
+   "metar": {
+    "icao": "EGLL",
+    "distance_km": 1.2
+   }
+  },
+  {
+   "id": "gcqr9c",
+   "seed_city": "Manchester",
+   "lat": 53.3578,
+   "lon": -2.3785,
+   "area": "Cheshire East",
+   "region": "nw",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "560557",
+    "lat": 53.431001,
+    "lon": -2.352893,
+    "distance_km": 8.3
+   },
+   "metar": {
+    "icao": "EGCC",
+    "distance_km": 6.9
+   }
+  },
+  {
+   "id": "gcy9j0",
+   "seed_city": "Newcastle",
+   "lat": 55.0223,
+   "lon": -1.8842,
+   "area": "Northumberland",
+   "region": "ne",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "017220",
+    "lat": 55.01952,
+    "lon": -1.881881,
+    "distance_km": 0.3
+   },
+   "metar": {
+    "icao": "EGNT",
+    "distance_km": 12.4
+   }
+  },
+  {
+   "id": "u12f6m",
+   "seed_city": "Norwich",
+   "lat": 52.457,
+   "lon": 1.1591,
+   "area": "Norfolk",
+   "region": "ee",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "E24756",
+    "lat": 52.494069,
+    "lon": 1.157581,
+    "distance_km": 4.1
+   },
+   "metar": {
+    "icao": "EGSH",
+    "distance_km": 25.7
+   }
+  },
+  {
+   "id": "gcrje9",
+   "seed_city": "Nottingham",
+   "lat": 53.0063,
+   "lon": -1.2469,
+   "area": "Nottinghamshire",
+   "region": "em",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "3766",
+    "lat": 53.005795,
+    "lon": -1.251101,
+    "distance_km": 0.3
+   },
+   "metar": {
+    "icao": "EGNX",
+    "distance_km": 20.2
+   }
+  },
+  {
+   "id": "gcpjxj",
+   "seed_city": "Oxford",
+   "lat": 51.622,
+   "lon": -1.0931,
+   "area": "Oxfordshire",
+   "region": "se",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "264254TP",
+    "lat": 51.617635,
+    "lon": -1.115281,
+    "distance_km": 1.6
+   },
+   "metar": null
+  },
+  {
+   "id": "gbujwt",
+   "seed_city": "Penzance",
+   "lat": 50.2158,
+   "lon": -5.3339,
+   "area": "Cornwall",
+   "region": "sw",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "48102",
+    "lat": 50.223298,
+    "lon": -5.305022,
+    "distance_km": 2.2
+   },
+   "metar": null
+  },
+  {
+   "id": "gbvn6n",
+   "seed_city": "Plymouth",
+   "lat": 50.3531,
+   "lon": -4.1254,
+   "area": "Plymouth",
+   "region": "sw",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "47155",
+    "lat": 50.416367,
+    "lon": -4.126049,
+    "distance_km": 7.0
+   },
+   "metar": null
+  },
+  {
+   "id": "gcwc40",
+   "seed_city": "Sheffield",
+   "lat": 53.616,
+   "lon": -1.6644,
+   "area": "West Yorkshire",
+   "region": "yh",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "078922",
+    "lat": 53.60567,
+    "lon": -1.766463,
+    "distance_km": 6.8
+   },
+   "metar": {
+    "icao": "EGNM",
+    "distance_km": 27.8
+   }
+  },
+  {
+   "id": "gcqh76",
+   "seed_city": "Shrewsbury",
+   "lat": 52.7921,
+   "lon": -2.6642,
+   "area": "Shropshire",
+   "region": "wm",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "1121",
+    "lat": 52.718322,
+    "lon": -2.717219,
+    "distance_km": 8.9
+   },
+   "metar": {
+    "icao": "EGOS",
+    "distance_km": 0.7
+   }
+  },
+  {
+   "id": "gcnfur",
+   "seed_city": "Southampton",
+   "lat": 51.1496,
+   "lon": -1.5656,
+   "area": "Hampshire",
+   "region": "se",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "E13580",
+    "lat": 51.103128,
+    "lon": -1.562184,
+    "distance_km": 5.2
+   },
+   "metar": {
+    "icao": "EGHI",
+    "distance_km": 26.5
+   }
+  },
+  {
+   "id": "gf7e0j",
+   "seed_city": "Stornoway",
+   "lat": 58.2138,
+   "lon": -6.3226,
+   "area": "Na h-Eileanan Siar",
+   "region": "he",
+   "country": "Scotland",
+   "ea_gauge": null,
+   "metar": {
+    "icao": "EGPO",
+    "distance_km": 0.5
+   }
+  },
+  {
+   "id": "gcxh27",
+   "seed_city": "York",
+   "lat": 54.2038,
+   "lon": -1.3898,
+   "area": "North Yorkshire",
+   "region": "yh",
+   "country": "England",
+   "ea_gauge": {
+    "station_reference": "054604",
+    "lat": 54.32908,
+    "lon": -1.456389,
+    "distance_km": 14.6
+   },
+   "metar": {
+    "icao": "EGNV",
+    "distance_km": 34.1
+   }
+  }
+ ]
+}
