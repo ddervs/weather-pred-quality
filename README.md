@@ -10,6 +10,12 @@ conformal-prediction-backed reliability guarantees.
 
 ## Status: v1 collector live
 
+[![Map of the 33 UK verification stations](docs/station-map.png)](docs/station-map.html)
+
+*Interactive version: [`docs/station-map.html`](docs/station-map.html) (open locally —
+hover for station details). Regenerate after registry changes with
+`uv run scripts/make_station_map.py --screenshot`.*
+
 - [`data/stations.json`](data/stations.json) — 33 health-checked verification locations
   (Met Office land-obs station + EA rain gauge + METAR airport triples)
 - [`wpq/`](wpq/) — collector fetching UKMO forecasts + MOGREPS ensembles (via Open-Meteo),

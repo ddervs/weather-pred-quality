@@ -1,0 +1,177 @@
+<title>UK verification stations</title>
+<style>
+  .wpq {
+    --surface: #fcfcfb; --page: #f9f9f7; --ink: #0b0b0b; --ink-2: #52514e;
+    --muted: #898781; --hairline: #e1e0d9; --border: rgba(11,11,11,.10);
+    --land: #efeee7; --land-line: #d8d7cd; --sea: #fcfcfb;
+    --c-full: #2a78d6; --c-gauge: #1baf7a; --c-metar: #eda100; --c-only: #008300;
+    color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page); min-height: 100vh; padding: 28px 20px 48px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .wpq {
+      --surface: #1a1a19; --page: #0d0d0d; --ink: #fff; --ink-2: #c3c2b7;
+      --muted: #898781; --hairline: #2c2c2a; --border: rgba(255,255,255,.10);
+      --land: #232320; --land-line: #383835; --sea: #1a1a19;
+      --c-full: #3987e5; --c-gauge: #199e70; --c-metar: #c98500; --c-only: #008300;
+    }
+  }
+  .wpq * { box-sizing: border-box; }
+  .wpq .wrap { max-width: 1060px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+  .wpq header h1 { font-size: 22px; font-weight: 650; margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+  .wpq header p { margin: 6px 0 0; color: var(--ink-2); max-width: 62ch; }
+  .wpq .layout { display: grid; grid-template-columns: minmax(0,7fr) minmax(230px,3fr); gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .wpq .layout { grid-template-columns: 1fr; } }
+  .wpq .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  .wpq .map-card { position: relative; padding: 10px; }
+  .wpq svg { display: block; width: 100%; height: auto; }
+  .wpq .coast { fill: var(--land); stroke: var(--land-line); stroke-width: .8; }
+  .wpq .stn { stroke: var(--surface); stroke-width: 1.6; }
+  .wpq .stn-hit { fill: transparent; cursor: pointer; }
+  .wpq .stn.hl { stroke: var(--ink); stroke-width: 2; }
+  .wpq .tip { position: absolute; pointer-events: none; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.13);
+    padding: 8px 11px; font-size: 13px; line-height: 1.45; max-width: 240px; display: none; z-index: 3; }
+  .wpq .tip b { font-size: 14px; }
+  .wpq .tip .k { color: var(--muted); }
+  .wpq aside .card { padding: 14px 16px; }
+  .wpq aside h2 { font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--muted); margin: 0 0 10px; }
+  .wpq .leg { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .wpq .leg li { display: flex; align-items: center; gap: 9px; }
+  .wpq .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+  .wpq .leg .n { margin-left: auto; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .wpq .note { color: var(--muted); font-size: 12.5px; margin-top: 12px; line-height: 1.5; }
+  .wpq .tbl-card { padding: 6px 0 2px; overflow-x: auto; }
+  .wpq table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 640px; }
+  .wpq th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); font-weight: 600; padding: 8px 14px; border-bottom: 1px solid var(--hairline); }
+  .wpq td { padding: 7px 14px; border-bottom: 1px solid var(--hairline); vertical-align: baseline; }
+  .wpq tr:last-child td { border-bottom: none; }
+  .wpq tbody tr:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+  .wpq td.num { font-variant-numeric: tabular-nums; color: var(--ink-2); }
+  .wpq td .none { color: var(--muted); }
+  .wpq .chip { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); vertical-align: baseline; }
+  @media (prefers-reduced-motion: no-preference) { .wpq .stn { transition: r .12s ease; } }
+</style>
+<div class="wpq"><div class="wrap">
+  <header>
+    <h1>UK forecast-verification stations</h1>
+    <p>The 33 fixed locations in <code>data/stations.json</code>. Each is a health-checked Met Office
+       observing station, paired where possible with a live Environment Agency rain gauge
+       (amounts; England only) and a METAR airport (cross-check).</p>
+  </header>
+  <div class="layout">
+    <div class="card map-card">
+      <svg id="map" viewBox="0 0 372 578" role="img" aria-label="Map of the UK showing 33 verification stations"></svg>
+      <div class="tip" id="tip"></div>
+    </div>
+    <aside>
+      <div class="card">
+        <h2>Paired sources</h2>
+        <ul class="leg" id="leg"></ul>
+        <p class="note">Rain-gauge pairing is England-only for now (EA network); Scotland, Wales
+          and NI need SEPA / NRW equivalents. Shetland shown clipped &mdash; no station there yet.</p>
+      </div>
+    </aside>
+  </div>
+  <div class="card tbl-card">
+    <table>
+      <thead><tr>
+        <th>Station</th><th>Nation</th><th>Area</th><th>ID</th>
+        <th>EA rain gauge</th><th>METAR</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div></div>
+<script>
+const COAST = __COAST__;
+const STATIONS = __STATIONS__;
+
+const LON0 = -8.7, LAT1 = 59.65, KX = Math.cos(55.3 * Math.PI / 180), S = 57.5;
+const px = (lon, lat) => [(lon - LON0) * KX * S, (LAT1 - lat) * S];
+
+const cls = s => s.ea_gauge && s.metar ? "full" : s.ea_gauge ? "gauge" : s.metar ? "metar" : "only";
+const CLASSES = {
+  full:  { label: "Rain gauge + METAR", color: "var(--c-full)" },
+  gauge: { label: "Rain gauge only",    color: "var(--c-gauge)" },
+  metar: { label: "METAR only",         color: "var(--c-metar)" },
+  only:  { label: "Station only",       color: "var(--c-only)" },
+};
+
+const svg = document.getElementById("map");
+const NS = "http://www.w3.org/2000/svg";
+let sea = document.createElementNS(NS, "rect");
+Object.assign(sea, {});
+sea.setAttribute("width", "372"); sea.setAttribute("height", "578"); sea.setAttribute("fill", "var(--sea)");
+svg.appendChild(sea);
+
+for (const key of ["ie", "im", "uk"]) {
+  for (const ring of COAST[key] || []) {
+    const d = ring.map((p, i) => (i ? "L" : "M") + px(p[0], p[1]).map(v => v.toFixed(1)).join(" ")).join("") + "Z";
+    const path = document.createElementNS(NS, "path");
+    path.setAttribute("d", d);
+    path.setAttribute("class", "coast");
+    if (key === "ie") path.setAttribute("opacity", "0.55");
+    svg.appendChild(path);
+  }
+}
+
+const tip = document.getElementById("tip");
+const dots = {};
+for (const s of STATIONS) {
+  const [x, y] = px(s.lon, s.lat);
+  const c = document.createElementNS(NS, "circle");
+  c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 6.5);
+  c.setAttribute("fill", CLASSES[cls(s)].color);
+  c.setAttribute("class", "stn");
+  svg.appendChild(c);
+  dots[s.id] = c;
+  const hit = document.createElementNS(NS, "circle");
+  hit.setAttribute("cx", x); hit.setAttribute("cy", y); hit.setAttribute("r", 13);
+  hit.setAttribute("class", "stn-hit");
+  hit.addEventListener("mousemove", e => {
+    const g = s.ea_gauge, m = s.metar;
+    tip.innerHTML = "<b>" + s.seed_city + "</b><br>" +
+      "<span class='k'>station</span> " + s.id + " &middot; " + (s.area || "") + "<br>" +
+      "<span class='k'>gauge</span> " + (g ? g.station_reference + " (" + g.distance_km + " km)" : "&mdash;") + "<br>" +
+      "<span class='k'>metar</span> " + (m ? m.icao + " (" + m.distance_km + " km)" : "&mdash;");
+    const r = svg.getBoundingClientRect();
+    tip.style.display = "block";
+    tip.style.left = Math.min(e.clientX - r.left + 14, r.width - 250) + "px";
+    tip.style.top = (e.clientY - r.top + 8) + "px";
+    c.setAttribute("r", 8.5);
+  });
+  hit.addEventListener("mouseleave", () => { tip.style.display = "none"; c.setAttribute("r", 6.5); });
+  svg.appendChild(hit);
+}
+
+const counts = {};
+for (const s of STATIONS) counts[cls(s)] = (counts[cls(s)] || 0) + 1;
+document.getElementById("leg").innerHTML = Object.entries(CLASSES)
+  .map(([k, v]) => "<li><span class='dot' style='background:" + v.color + "'></span>" +
+                   v.label + "<span class='n'>" + (counts[k] || 0) + "</span></li>").join("");
+
+document.getElementById("rows").innerHTML = STATIONS
+  .slice().sort((a, b) => a.seed_city.localeCompare(b.seed_city))
+  .map(s => {
+    const g = s.ea_gauge, m = s.metar, k = cls(s);
+    return "<tr data-id='" + s.id + "'>" +
+      "<td><span class='chip' style='background:" + CLASSES[k].color + "'></span>" + s.seed_city + "</td>" +
+      "<td>" + (s.country || "") + "</td><td>" + (s.area || "") + "</td>" +
+      "<td class='num'>" + s.id + "</td>" +
+      "<td class='num'>" + (g ? g.station_reference + " &middot; " + g.distance_km + " km" : "<span class='none'>&mdash;</span>") + "</td>" +
+      "<td class='num'>" + (m ? m.icao + " &middot; " + m.distance_km + " km" : "<span class='none'>&mdash;</span>") + "</td></tr>";
+  }).join("");
+
+document.getElementById("rows").addEventListener("mouseover", e => {
+  const row = e.target.closest("tr"); if (!row) return;
+  Object.values(dots).forEach(d => d.classList.remove("hl"));
+  const d = dots[row.dataset.id]; if (d) d.classList.add("hl");
+});
+document.getElementById("rows").addEventListener("mouseleave", () =>
+  Object.values(dots).forEach(d => d.classList.remove("hl")));
+</script>
