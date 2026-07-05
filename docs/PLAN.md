@@ -18,6 +18,20 @@ but only after everything works privately** (his explicit preference, 2026-07-04
 
 ## Current state (as of 2026-07-05, second chunk)
 
+- **Weekly health email wired in** (2026-07-05, side task): `weekly-report.yml`
+  (Mondays 06:20 UTC) runs `scripts/make_weekly_report.py` → RAG tables for the
+  7 collector sources (run completeness + station coverage) and for model ×
+  variable metrics vs a trailing 4-week live-obs baseline (⚪ until ~4 weeks of
+  live obs exist, ~2026-08). Delivery = the scotbet pattern: issue created with
+  `_cc @ddervs_`, GitHub emails the mention, issue instantly closed (label
+  `weekly-report`). Plus a mid-week backstop: collect.yml now runs
+  `scripts/check_source_alerts.py` after every run (`if: always()`) and raises a
+  `source-alert` issue when a source has been dead 24 h+ (dedup: one per source
+  per 7 days). Also fixed: collect.yml's commit step now `if: always()`, so one
+  failing source no longer loses the other sources' data. All RAG thresholds
+  live at the top of make_weekly_report.py. First report already flagged the
+  Cambridge + Lincoln EA gauges as silent — worth checking / repairing.
+
 - **SEPA rain gauges wired in** (2026-07-05, side task — was "later chunk 2"):
   Scotland rain-amount truth now live. SEPA's KiWIS API (`timeseries.sepa.org.uk`,
   keyless, OGL, attribute SEPA) → new collector source `sepa_rain` (ONE batched
@@ -148,7 +162,8 @@ artifact); public Pages + personal site only when Danial says so.
    only the 2 NI stations lack it (no free gauge API).
 3. **v1.5 data**: Met Office DataHub site-specific product into collector ("model vs
    app product"); widen Open-Meteo model list (ECMWF/ICON/GFS…) — schema already copes.
-4. **Ops**: monthly station health report from collected data; repo-size watch
+4. **Ops**: ~~station health report~~ DONE 2026-07-05 (weekly RAG email,
+  weekly-report.yml). Still to do: repo-size watch
   (`data/raw` grows ~1 MB/day; consider parquet-consolidation + raw pruning at ~1 GB).
   Proper out-of-sample climatology baseline (1991-2020 normals or held-out split).
   Drop duckdb if still unused. Bump actions/checkout + setup-uv (Node 20 warning).

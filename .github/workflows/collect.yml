@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  issues: write # source-down alert issues
 
 concurrency:
   group: collect
@@ -32,6 +33,8 @@ jobs:
         run: uv run python -m wpq.collect
 
       - name: Commit raw data
+        # always(): one failing source must not lose the sources that succeeded
+        if: always()
         run: |
           git config user.name "wpq-collector"
           git config user.email "actions@users.noreply.github.com"
@@ -43,3 +46,10 @@ jobs:
             git pull --rebase origin main
             git push
           fi
+
+      - name: Alert if any source has been dead 24h+ (one issue per source per week)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+        run: uv run scripts/check_source_alerts.py

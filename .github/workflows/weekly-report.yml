@@ -1,0 +1,51 @@
+name: weekly-report
+
+# Monday-morning health email via the scotbet pattern: build a markdown report,
+# post it as a fresh issue that @-mentions the owner (GitHub emails the mention
+# natively - no SMTP credential), then close the issue immediately. History
+# stays browsable under: is:issue label:weekly-report is:closed
+
+on:
+  schedule:
+    # Mondays 06:20 UTC (~07:20 UK summer) - after Sunday 03:40's metrics rebuild
+    - cron: "20 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: weekly-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - run: uv sync --frozen
+
+      - name: Rebuild normalised tables (the report computes its own 7-day windows)
+        run: uv run python -m wpq.normalize
+
+      - name: Build report
+        run: uv run scripts/make_weekly_report.py --out report.md
+
+      - name: Post report to a closed issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          printf '\n_cc @%s_\n' "$OWNER" >> report.md
+          gh label create weekly-report \
+            --description "Weekly health reports" --color 1d76db 2>/dev/null || true
+          url=$(gh issue create \
+            --title "Weekly report — $(date -u '+%Y-%m-%d')" \
+            --label weekly-report --body-file report.md)
+          echo "Created $url"
+          gh issue close "$url" --reason completed
