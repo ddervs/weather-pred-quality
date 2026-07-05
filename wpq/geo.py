@@ -1,4 +1,11 @@
-"""Small geo helpers: geohash decode (Met Office stations are keyed by geohash) and haversine."""
+"""Small geo helpers: geohash decode (Met Office stations are keyed by geohash) and haversine.
+
+Hand-rolled on purpose (same minimal-deps stance as skipping `scores`/MAPIE): both
+algorithms are frozen closed forms with nothing upstream to track, the PyPI geohash
+packages are largely unmaintained, and spherical haversine is within ~0.3 % of a
+WGS84 geodesic — irrelevant for ranking nearest gauges. Only the registry builder
+uses these. Reference-vector tests: tests/test_geo.py.
+"""
 
 import math
 
