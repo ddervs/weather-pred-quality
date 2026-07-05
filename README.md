@@ -30,6 +30,10 @@ hover for station details). Regenerate after registry changes with
   weekly by [CI](.github/workflows/metrics.yml). First findings:
   [`docs/07-first-real-metrics.md`](docs/07-first-real-metrics.md) — e.g. UKMO 10 m wind
   loses to day-of-year climatology beyond day 3
+- [`wpq/calibration.py`](wpq/calibration.py) — split-conformal temperature intervals
+  (90 % coverage held out-of-sample: ±1.5 °C day 0 → ±3.6 °C day 5), rain Brier
+  decomposition (binary rain calls have *negative* skill vs climatology beyond day 1),
+  block-bootstrap CIs: [`docs/08-calibration.md`](docs/08-calibration.md)
 
 Research docs are in [`docs/`](docs/):
 start with [`docs/00-overview.md`](docs/00-overview.md) (TL;DR + decisions needed),

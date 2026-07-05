@@ -28,6 +28,9 @@ jobs:
       - name: Rebuild normalised tables and metrics
         run: uv run scripts/run_metrics.py --normalize
 
+      - name: Rebuild calibration tables (conformal, Brier decomposition, bootstrap CIs)
+        run: uv run scripts/run_calibration.py
+
       - name: Print headline report into the run log
         run: uv run scripts/report_metrics.py
 

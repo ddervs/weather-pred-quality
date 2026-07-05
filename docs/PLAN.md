@@ -14,7 +14,24 @@ Research: docs/00..05. Repo is private for now; **eventual dashboard hosting = p
 GitHub Pages on Danial's personal site, like github.com/ddervs/restaurant-review-map —
 but only after everything works privately** (his explicit preference, 2026-07-04).
 
-## Current state (as of 2026-07-05)
+## Current state (as of 2026-07-05, second chunk)
+
+- **Calibration layer DONE** (same day, second chunk):
+  - `wpq/calibration.py` + `scripts/run_calibration.py` →
+    `data/metrics/{conformal,brier_decomposition,bootstrap_ci}.parquet`; wired
+    into metrics.yml (runs after run_metrics). ~15 s locally. numpy added.
+  - Split conformal (hand-rolled, no MAPIE), Mondrian nation × lead, |error|
+    scores, cal=2024 / test=2025-26: **coverage 0.89–0.93 vs 0.90 target in
+    every cell**. UK 90 % half-widths ±1.5 °C (d0) → ±3.6 °C (d5).
+  - Murphy decomposition finding: **binary rain forecast has negative Brier
+    skill vs base rate from day 2** (resolution collapses, reliability penalty
+    balloons) — the killer argument for MOGREPS PoP; same code will draw real
+    reliability curves once ~4 wks of ensembles exist (~2026-08-01).
+  - Station-day block bootstrap (B=1000): headline CIs ±0.005–0.015 — all
+    lead-to-lead differences significant. Findings + caveats in docs/08.
+  - All of it is vs ERA5 truth; redo vs live obs once months accumulate.
+
+## Earlier state (2026-07-05, first chunk)
 
 - **Normalisation + metrics engine DONE** (this was the 2026-07-05 chunk):
   - `wpq/normalize.py` → `data/norm/forecasts.parquet` (9.0 M rows) +
@@ -85,36 +102,43 @@ but only after everything works privately** (his explicit preference, 2026-07-04
   the missing subset differs per lead — cross-lead metric comparisons carry a
   sample-composition caveat (see docs/07). Not a bug; the API just has holes.
 
-## NEXT CHUNK: calibration layer
+## NEXT CHUNK: dashboard v1 (private)
 
-Goal: quantify *trustworthiness*, not just accuracy. Reliability diagrams +
-calibration error with bootstrap CIs; conformal intervals on temperature.
+Goal: the numbers exist; make them legible. Static, self-contained HTML from the
+committed `data/metrics/*.parquet` — no server, £0. Private first (open locally /
+artifact); public Pages + personal site only when Danial says so.
 
-1. Reliability data for rain occurrence: currently the forecast is {0,1} so a
-   reliability diagram is two bins — still compute forecast-frequency vs observed-
-   frequency + Brier decomposition (reliability/resolution/uncertainty) as scaffolding.
-   Real curves arrive with MOGREPS member-fraction PoP (needs ~4 weeks of ensemble
-   collection; started 2026-07-04, so ready ~2026-08-01 — check
-   `data/raw/ukmo_ensemble/` day count before building).
-2. Conformal intervals on temp via MAPIE (Mondrian: region × lead) or hand-rolled
-   split-conformal on the backfill (2024 fit / 2025-26 score to dodge the in-sample
-   trap). Output: interval half-widths + empirical coverage per lead × region table.
-3. Bootstrap CIs on headline metrics (station-level block bootstrap — hours within a
-   station-day are correlated; naive iid bootstrap will be overconfident).
-4. Extend metrics.parquet or add calibration.parquet; wire into report + docs/08.
+1. `scripts/make_dashboard.py` → `docs/dashboard.html`, following the pattern of
+   `scripts/make_station_map.py` + `scripts/templates/` (embed JSON payload +
+   inline JS/CSS; no CDN so it works offline and on Pages later).
+2. Panels, in priority order:
+   - Lead curves: temp MAE + rain ETS by lead with the bootstrap CI bands
+     (bootstrap_ci.parquet), UKMO vs persistence vs climatology.
+   - **The wind panel**: UKMO wind MAE vs climatology crossing at day ~3.5 —
+     the headline finding, deserves its own chart.
+   - Conformal: half-width fan (±q̂ by lead) + coverage-vs-target strip, per nation.
+   - Brier decomposition stacked bars by lead (shows the negative-skill story).
+   - Per-station scorecard table (station, nation, temp MAE d1/d5, ETS d1, n) from
+     metrics.parquet sufficient stats — re-aggregate sums, never average MAEs.
+3. Screenshot into README like the station map (`--screenshot` flag, same
+   playwright pattern as make_station_map.py).
+4. Regenerate in metrics.yml after calibration step; commit docs/dashboard.html.
+   Keep the payload lean: aggregate in Python, embed only what's plotted (< ~200 kB).
 
 ## Later chunks (in order, one per session-ish)
 
-1. **Dashboard v1**: static page from metrics.parquet (station map pattern already in
-   `scripts/templates/`); per-station scorecards, lead curves, reliability diagrams.
-   Host privately first (artifact / local); public Pages + personal site later.
-   The wind-loses-to-climatology-at-day-4+ finding deserves a panel.
+1. **PoP + real reliability curves** (~2026-08-01, once `data/raw/ukmo_ensemble/`
+   spans ~4 weeks): member-fraction PoP per lead, multi-bin reliability via the
+   existing Brier-decomposition code, add to metrics + dashboard. Also redo the
+   headline tables vs live obs truth (land_obs/EA/METAR) as the ERA5 credibility
+   check — docs/08 caveat.
 2. **SEPA/NRW gauges** for Scotland/Wales rain truth; re-pair those stations.
 3. **v1.5 data**: Met Office DataHub site-specific product into collector ("model vs
    app product"); widen Open-Meteo model list (ECMWF/ICON/GFS…) — schema already copes.
 4. **Ops**: monthly station health report from collected data; repo-size watch
   (`data/raw` grows ~1 MB/day; consider parquet-consolidation + raw pruning at ~1 GB).
   Proper out-of-sample climatology baseline (1991-2020 normals or held-out split).
+  Drop duckdb if still unused. Bump actions/checkout + setup-uv (Node 20 warning).
 
 ## Conventions
 
