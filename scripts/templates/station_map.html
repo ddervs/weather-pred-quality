@@ -60,8 +60,8 @@
   <header>
     <h1>UK forecast-verification stations</h1>
     <p>The 33 fixed locations in <code>data/stations.json</code>. Each is a health-checked Met Office
-       observing station, paired where possible with a live Environment Agency rain gauge
-       (amounts; England only) and a METAR airport (cross-check).</p>
+       observing station, paired where possible with a live rain gauge (amounts; EA in England,
+       SEPA in Scotland, NRW in Wales) and a METAR airport (cross-check).</p>
   </header>
   <div class="layout">
     <div class="card map-card">
@@ -72,8 +72,9 @@
       <div class="card">
         <h2>Paired sources</h2>
         <ul class="leg" id="leg"></ul>
-        <p class="note">Rain-gauge pairing is England-only for now (EA network); Scotland, Wales
-          and NI need SEPA / NRW equivalents. Shetland shown clipped &mdash; no station there yet.</p>
+        <p class="note">Rain gauges cover Great Britain (EA / SEPA / NRW networks, paired
+          2026-07-05); Northern Ireland has no free gauge API. Where a station has two gauges
+          the nearest is shown. Shetland shown clipped &mdash; no station there yet.</p>
       </div>
     </aside>
   </div>
@@ -81,7 +82,7 @@
     <table>
       <thead><tr>
         <th>Station</th><th>Nation</th><th>Area</th><th>ID</th>
-        <th>EA rain gauge</th><th>METAR</th>
+        <th>Rain gauge</th><th>METAR</th>
       </tr></thead>
       <tbody id="rows"></tbody>
     </table>
@@ -94,7 +95,17 @@ const STATIONS = __STATIONS__;
 const LON0 = -8.7, LAT1 = 59.65, KX = Math.cos(55.3 * Math.PI / 180), S = 57.5;
 const px = (lon, lat) => [(lon - LON0) * KX * S, (LAT1 - lat) * S];
 
-const cls = s => s.ea_gauge && s.metar ? "full" : s.ea_gauge ? "gauge" : s.metar ? "metar" : "only";
+// nearest live rain gauge across the three national networks (Cardiff has EA + NRW)
+const gaugeOf = s => {
+  const g = [
+    s.ea_gauge   && { net: "EA",   ref: s.ea_gauge.station_reference, km: s.ea_gauge.distance_km },
+    s.sepa_gauge && { net: "SEPA", ref: s.sepa_gauge.name,            km: s.sepa_gauge.distance_km },
+    s.nrw_gauge  && { net: "NRW",  ref: s.nrw_gauge.name,             km: s.nrw_gauge.distance_km },
+  ].filter(Boolean);
+  return g.length ? g.reduce((a, b) => (a.km <= b.km ? a : b)) : null;
+};
+
+const cls = s => gaugeOf(s) && s.metar ? "full" : gaugeOf(s) ? "gauge" : s.metar ? "metar" : "only";
 const CLASSES = {
   full:  { label: "Rain gauge + METAR", color: "var(--c-full)" },
   gauge: { label: "Rain gauge only",    color: "var(--c-gauge)" },
@@ -134,10 +145,10 @@ for (const s of STATIONS) {
   hit.setAttribute("cx", x); hit.setAttribute("cy", y); hit.setAttribute("r", 13);
   hit.setAttribute("class", "stn-hit");
   hit.addEventListener("mousemove", e => {
-    const g = s.ea_gauge, m = s.metar;
+    const g = gaugeOf(s), m = s.metar;
     tip.innerHTML = "<b>" + s.seed_city + "</b><br>" +
       "<span class='k'>station</span> " + s.id + " &middot; " + (s.area || "") + "<br>" +
-      "<span class='k'>gauge</span> " + (g ? g.station_reference + " (" + g.distance_km + " km)" : "&mdash;") + "<br>" +
+      "<span class='k'>gauge</span> " + (g ? g.net + " " + g.ref + " (" + g.km + " km)" : "&mdash;") + "<br>" +
       "<span class='k'>metar</span> " + (m ? m.icao + " (" + m.distance_km + " km)" : "&mdash;");
     const r = svg.getBoundingClientRect();
     tip.style.display = "block";
@@ -158,12 +169,12 @@ document.getElementById("leg").innerHTML = Object.entries(CLASSES)
 document.getElementById("rows").innerHTML = STATIONS
   .slice().sort((a, b) => a.seed_city.localeCompare(b.seed_city))
   .map(s => {
-    const g = s.ea_gauge, m = s.metar, k = cls(s);
+    const g = gaugeOf(s), m = s.metar, k = cls(s);
     return "<tr data-id='" + s.id + "'>" +
       "<td><span class='chip' style='background:" + CLASSES[k].color + "'></span>" + s.seed_city + "</td>" +
       "<td>" + (s.country || "") + "</td><td>" + (s.area || "") + "</td>" +
       "<td class='num'>" + s.id + "</td>" +
-      "<td class='num'>" + (g ? g.station_reference + " &middot; " + g.distance_km + " km" : "<span class='none'>&mdash;</span>") + "</td>" +
+      "<td class='num'>" + (g ? g.net + " " + g.ref + " &middot; " + g.km + " km" : "<span class='none'>&mdash;</span>") + "</td>" +
       "<td class='num'>" + (m ? m.icao + " &middot; " + m.distance_km + " km" : "<span class='none'>&mdash;</span>") + "</td></tr>";
   }).join("");
 
