@@ -8,7 +8,7 @@ them against station observations, and scores providers on accuracy *and* honest
 North star: a UK map serving calibrated probabilistic forecasts with
 conformal-prediction-backed reliability guarantees.
 
-## Status: v1 collector live
+## Status: collector live + first real metrics
 
 [![Map of the 33 UK verification stations](docs/station-map.png)](docs/station-map.html)
 
@@ -24,6 +24,12 @@ hover for station details). Regenerate after registry changes with
 - [`scripts/backfill_ukmo.py`](scripts/backfill_ukmo.py) — one-off 2024→now backfill of
   lead-stratified UKMO forecasts + ERA5 truth; [`scripts/smoke_metrics.py`](scripts/smoke_metrics.py)
   sanity-checks skill-vs-lead on it
+- [`wpq/normalize.py`](wpq/normalize.py) + [`wpq/metrics.py`](wpq/metrics.py) — raw JSON →
+  tidy Parquet (`data/norm/`) → verification metrics (`data/metrics/metrics.parquet`):
+  MAE/bias/RMSE, Brier, POD/FAR/CSI/ETS vs persistence + climatology baselines, rebuilt
+  weekly by [CI](.github/workflows/metrics.yml). First findings:
+  [`docs/07-first-real-metrics.md`](docs/07-first-real-metrics.md) — e.g. UKMO 10 m wind
+  loses to day-of-year climatology beyond day 3
 
 Research docs are in [`docs/`](docs/):
 start with [`docs/00-overview.md`](docs/00-overview.md) (TL;DR + decisions needed),

@@ -14,7 +14,37 @@ Research: docs/00..05. Repo is private for now; **eventual dashboard hosting = p
 GitHub Pages on Danial's personal site, like github.com/ddervs/restaurant-review-map —
 but only after everything works privately** (his explicit preference, 2026-07-04).
 
-## Current state (as of 2026-07-04 evening)
+## Current state (as of 2026-07-05)
+
+- **Normalisation + metrics engine DONE** (this was the 2026-07-05 chunk):
+  - `wpq/normalize.py` → `data/norm/forecasts.parquet` (9.0 M rows) +
+    `observations.parquet` (2.9 M rows). Controlled vocab `temp_c, precip_mm,
+    wind_ms, gust_ms, rain_occurred`; all unit conversions live there (module
+    docstring documents every convention). Full rebuild ≈ 35 s locally.
+  - `wpq/metrics.py` + `scripts/run_metrics.py` → `data/metrics/metrics.parquet`:
+    sufficient statistics + derived metrics at (model, truth_source, variable,
+    lead_day, station, month) grain. Baselines included as pseudo-models
+    `persistence`, `climatology_dayofyear` (in-sample, crude — flagged).
+    `scores` lib skipped (xarray bloat); metrics hand-rolled in polars.
+  - `scripts/report_metrics.py` prints headline tables; findings in
+    docs/07-first-real-metrics.md. Acceptance PASSED: temp MAE by lead vs ERA5 =
+    0.70/0.84/1.03/1.15/1.36/1.63 °C — identical to the smoke test.
+    Notable finding: UKMO 10 m wind loses to day-of-year climatology at leads 4–5.
+  - `.github/workflows/metrics.yml`: weekly (Sun 03:40 UTC) + manual; rebuilds
+    norm + metrics, commits with the same rebase pattern as collect.yml.
+    DEVIATION from the original chunk spec: `data/norm/` is gitignored, only
+    `data/metrics/` is committed — forecasts.parquet is 45 MB and rewrites fully
+    each run (≈2.3 GB/yr of git bloat) while being a 35 s deterministic rebuild
+    from committed inputs. Anything needing data/norm runs
+    `uv run scripts/run_metrics.py --normalize` first.
+- Deps now: requests, polars(+rtcompat), duckdb (duckdb still unused — drop it
+  later if it stays unused). Local gotcha: Danial's local Python runs under
+  Rosetta → plain polars crashes; `polars[rtcompat]` fixes it (already in
+  pyproject). CI (linux x86) unaffected.
+- `land_obs` wind units RESOLVED: m/s (empirically matched co-located METAR
+  kt→m/s at 8 airports, 2026-07-05).
+
+## Previous state (2026-07-04 evening)
 
 - `data/stations.json` — 33 fixed stations (Met Office geohash + EA gauge + METAR
   triples). Locations = decoded geohash centres. Do not move stations casually.
@@ -51,56 +81,40 @@ but only after everything works privately** (his explicit preference, 2026-07-04
 - `metar` files: list of obs; `temp` integer °C, `wspd` knots, no rain amounts,
   `wxString` codes; 2 obs/h.
 - Met Office `nearest` endpoint needs ≤2 dp coords; obs API is per-station geohash.
+- Previous-runs leads ≥1 d return nulls for 25–45 % of hours (lead 0 is complete), and
+  the missing subset differs per lead — cross-lead metric comparisons carry a
+  sample-composition caveat (see docs/07). Not a bug; the API just has holes.
 
-## NEXT CHUNK: normalisation layer + real metrics engine
+## NEXT CHUNK: calibration layer
 
-Goal: from raw/backfill files to one queryable table, then first real skill numbers.
-Acceptance: a `metrics.parquet` whose MAE-by-lead broadly reproduces the smoke test, plus
-Brier/reliability for rain occurrence and CRPS (deterministic ⇒ CRPS = MAE), segmented.
+Goal: quantify *trustworthiness*, not just accuracy. Reliability diagrams +
+calibration error with bootstrap CIs; conformal intervals on temperature.
 
-1. **Deps**: `uv add duckdb polars scores` (scores is the BoM verification lib; if it
-   drags in heavy xarray deps and annoys, fall back to hand-rolled + properscoring).
-2. **`wpq/normalize.py`** → writes Parquet under `data/norm/`:
-   - `forecasts.parquet`: `(source, model, station_id, init_time, valid_time,
-     lead_hours, variable, value, member)` — member NULL for deterministic.
-     Readers: backfill prev_runs (lead from `_previous_dayN`), raw ukmo_forecast
-     (lead from fetch ts), raw ukmo_ensemble (member from key suffix).
-   - `observations.parquet`: `(source, station_id, valid_time, variable, value)` —
-     readers: land_obs, ea_rain (aggregate 15-min → hourly mm), metar, backfill era5
-     (source='era5' so model-truth vs obs-truth can be compared).
-   - Normalise variables to a small controlled vocabulary: `temp_c`, `precip_mm`,
-     `wind_ms`, `gust_ms`, `rain_occurred` (derived: EA mm>=0.1 | weather_code rain set).
-     Units converted at this layer, documented in the module docstring.
-   - Idempotent: full rebuild from files each run is fine at current volumes (<10 min);
-     partition by month if slow.
-3. **`wpq/metrics.py` + `scripts/run_metrics.py`** → `data/metrics/metrics.parquet`:
-   - Joins forecasts×observations on (station, valid hour, variable).
-   - Metrics per segment `(truth_source, variable, lead_day, region, country, season, month)`:
-     MAE, bias, RMSE, n; rain: Brier (occurrence as {0,1} forecast for now), POD/FAR/CSI/ETS.
-   - Baselines in same table as pseudo-models: `persistence` (obs 24 h earlier),
-     `climatology_dayofyear` (mean over the 2.5 y ERA5 sample per station×doy×hour —
-     crude, flag it; proper 1991-2020 climatology is a later upgrade).
-   - Skill scores computed at query/report time, not stored.
-4. **Report**: `scripts/report_metrics.py` printing the headline table (MAE by lead ×
-   nation; ETS by lead) + write `docs/07-first-real-metrics.md` with findings.
-5. **CI**: extend Actions with a weekly `metrics.yml` (workflow_dispatch + cron Sun
-   03:40 UTC): run normalize + metrics, commit `data/norm` + `data/metrics`.
-   Mind the race with the 6-hourly collect workflow: `git pull --rebase` before push
-   (already the pattern in collect.yml).
+1. Reliability data for rain occurrence: currently the forecast is {0,1} so a
+   reliability diagram is two bins — still compute forecast-frequency vs observed-
+   frequency + Brier decomposition (reliability/resolution/uncertainty) as scaffolding.
+   Real curves arrive with MOGREPS member-fraction PoP (needs ~4 weeks of ensemble
+   collection; started 2026-07-04, so ready ~2026-08-01 — check
+   `data/raw/ukmo_ensemble/` day count before building).
+2. Conformal intervals on temp via MAPIE (Mondrian: region × lead) or hand-rolled
+   split-conformal on the backfill (2024 fit / 2025-26 score to dodge the in-sample
+   trap). Output: interval half-widths + empirical coverage per lead × region table.
+3. Bootstrap CIs on headline metrics (station-level block bootstrap — hours within a
+   station-day are correlated; naive iid bootstrap will be overconfident).
+4. Extend metrics.parquet or add calibration.parquet; wire into report + docs/08.
 
 ## Later chunks (in order, one per session-ish)
 
-1. **Calibration layer**: reliability diagrams + calibration error w/ bootstrap CIs
-   (`uncertainty-calibration`), PoP from ensemble member fraction once ~4 weeks of
-   MOGREPS accumulate; conformal intervals via MAPIE (Mondrian: region × lead) on temp.
-2. **Dashboard v1**: static page from metrics.parquet (station map pattern already in
+1. **Dashboard v1**: static page from metrics.parquet (station map pattern already in
    `scripts/templates/`); per-station scorecards, lead curves, reliability diagrams.
    Host privately first (artifact / local); public Pages + personal site later.
-3. **SEPA/NRW gauges** for Scotland/Wales rain truth; re-pair those stations.
-4. **v1.5 data**: Met Office DataHub site-specific product into collector ("model vs
+   The wind-loses-to-climatology-at-day-4+ finding deserves a panel.
+2. **SEPA/NRW gauges** for Scotland/Wales rain truth; re-pair those stations.
+3. **v1.5 data**: Met Office DataHub site-specific product into collector ("model vs
    app product"); widen Open-Meteo model list (ECMWF/ICON/GFS…) — schema already copes.
-5. **Ops**: monthly station health report from collected data; repo-size watch
+4. **Ops**: monthly station health report from collected data; repo-size watch
   (`data/raw` grows ~1 MB/day; consider parquet-consolidation + raw pruning at ~1 GB).
+  Proper out-of-sample climatology baseline (1991-2020 normals or held-out split).
 
 ## Conventions
 

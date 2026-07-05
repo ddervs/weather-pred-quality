@@ -1,0 +1,45 @@
+name: metrics
+
+on:
+  schedule:
+    # weekly, Sunday 03:40 UTC (offset avoids top-of-hour cron rush and the
+    # 00:20Z collect run; concurrency + rebase handle any residual race)
+    - cron: "40 3 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: metrics
+  cancel-in-progress: false
+
+jobs:
+  metrics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - run: uv sync --frozen
+
+      - name: Rebuild normalised tables and metrics
+        run: uv run scripts/run_metrics.py --normalize
+
+      - name: Print headline report into the run log
+        run: uv run scripts/report_metrics.py
+
+      - name: Commit metrics (data/norm is derived and gitignored - 45 MB/week bloat)
+        run: |
+          git config user.name "wpq-metrics"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/metrics
+          if git diff --cached --quiet; then
+            echo "nothing new"
+          else
+            git commit -m "metrics: $(date -u +%FT%H%MZ)"
+            git pull --rebase origin main
+            git push
+          fi

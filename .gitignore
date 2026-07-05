@@ -12,3 +12,6 @@ wheels/
 # Secrets
 .env
 .env.*
+
+# Derived, rebuilt by scripts/run_metrics.py --normalize (45 MB, would bloat git weekly)
+data/norm/
