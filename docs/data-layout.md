@@ -12,6 +12,7 @@ data/
 │   ├── land_obs/YYYY-MM-DD/HHMMZ.json.gz
 │   ├── ea_rain/YYYY-MM-DD/HHMMZ.json.gz
 │   ├── sepa_rain/YYYY-MM-DD/HHMMZ.json.gz           # since 2026-07-05
+│   ├── nrw_rain/YYYY-MM-DD/HHMMZ.json.gz            # since 2026-07-05
 │   └── metar/YYYY-MM-DD/HHMMZ.json.gz
 ├── backfill/                   # one-off historical pull, immutable (committed)
 │   ├── prev_runs/{start}_{end}_c{ci}.json.gz       # UKMO forecasts, leads 0–5 d
@@ -55,6 +56,12 @@ casually** — continuity matters. Top level: `built_at`, `notes`, `stations` (l
     "ts_id": "56594010",   // KiWIS 15-min Precip series ID, pre-resolved so the
                            // collector fetches all gauges in ONE getTimeseriesValues call
     "lat": 55.928211, "lon": -3.343123, "distance_km": 0.2
+  },
+  "nrw_gauge": {           // nearest live NRW rain gauge — Wales only, null elsewhere
+    "station_id": 1027, "name": "Llyn Cefni",
+    "parameter": 10122,    // NRW Rainfall parameter IDs are PER-STATION — stored so
+                           // the collector can query without a lookup
+    "lat": 53.286865, "lon": -4.36358, "distance_km": 3.2
   }
 }
 ```
@@ -89,6 +96,13 @@ UTC). Shapes, and the gotchas that cost real time to learn:
   `ts_id`, not our geohash — join back through `sepa_gauge.ts_id` in `stations.json`.
   Values ~30 min behind real time. Same dormancy/QC caveats as EA; the dead
   `apps.sepa.org.uk` API is *not* this one (`timeseries.sepa.org.uk` is current).
+- **`nrw_rain/`** — `{station_id: {…, units, parameterReadings: [{time, value}]}}`;
+  `value` = mm per 15-min interval, `time` = interval end (as EA/SEPA). Fetched one
+  call per gauge with a `from`/`to` date window — **the historical endpoint returns a
+  full year (~1.5 MB) if unwindowed**, and `from`/`to` are the only window params it
+  honours. Needs `NRW_API_KEY`. `statusEN: "Online"` is unreliable (gauges dead since
+  2023 still say it) — liveness = the Rainfall parameter's `latestTime`. Rainfall
+  `parameter` IDs differ per station (from `/StationData`'s `parameters[]`).
 - **`metar/`** — list of observations across all airports; `temp` **integer** °C, `wspd`
   knots, `wxString` present-weather codes (`RA`, `DZ`, …), ~2 obs/hour. No rain amounts.
 
@@ -128,17 +142,17 @@ conversion happens there and only there**. Full rebuild each run (idempotent):
 | `member` | ensemble member (0 = control); null for deterministic |
 
 **`observations.parquet`** (~3 M rows): `source` (`era5` \| `land_obs` \| `ea_rain` \|
-`sepa_rain` \| `metar`), `station_id`, `valid_time`, `variable`, `value`.
+`sepa_rain` \| `nrw_rain` \| `metar`), `station_id`, `valid_time`, `variable`, `value`.
 
 ### The controlled variable vocabulary (and every unit convention)
 
 | variable | unit | conversions & conventions |
 |---|---|---|
 | `temp_c` | °C | Open-Meteo/ERA5 native; land_obs ÷ 100 (0.01 °C resolution); METAR integer °C |
-| `precip_mm` | mm accumulated over the hour **preceding** `valid_time` (Open-Meteo convention) | EA and SEPA 15-min readings (both mm totals for the 15 min ending at their timestamp) summed into that window — an hour needs all four slices to count. QC: negatives clamped to 0, single readings > 20 mm/15 min discarded |
+| `precip_mm` | mm accumulated over the hour **preceding** `valid_time` (Open-Meteo convention) | EA/SEPA/NRW 15-min readings (all mm totals for the 15 min ending at their timestamp) summed into that window — an hour needs all four slices to count. QC: negatives clamped to 0, single readings > 20 mm/15 min discarded |
 | `wind_ms` | m/s | Open-Meteo/ERA5 km/h ÷ 3.6; METAR knots × 0.514444; land_obs already m/s |
 | `gust_ms` | m/s | same conversions as `wind_ms` |
-| `rain_occurred` | 0/1 — "did it rain this hour?" | era5/ea_rain/sepa_rain: hourly `precip_mm ≥ 0.1`. land_obs: Met Office significant-weather code in the liquid-precip set {9–18, 28–30} (rain/drizzle/sleet/thunder; hail and snow excluded). metar: `wxString` contains `RA` or `DZ` — instantaneous at obs time, read as "raining around the top of the hour" |
+| `rain_occurred` | 0/1 — "did it rain this hour?" | era5 and the rain gauges (ea/sepa/nrw): hourly `precip_mm ≥ 0.1`. land_obs: Met Office significant-weather code in the liquid-precip set {9–18, 28–30} (rain/drizzle/sleet/thunder; hail and snow excluded). metar: `wxString` contains `RA` or `DZ` — instantaneous at obs time, read as "raining around the top of the hour" |
 
 METAR reports ~2/h; the report nearest each top-of-hour (±30 min) is kept. Overlapping
 48 h land-obs windows across collections are deduped keep-last (later file wins).

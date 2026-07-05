@@ -87,6 +87,7 @@ variable**, rather than interpolating either side.
 | **Met Office land observations** (`land_obs`) | temperature, wind, humidity, visibility, pressure; rain *occurrence* via weather code | hourly | **no rain amounts** on the free tier; needs an API key (360 calls/day); some listed stations are duds |
 | **Environment Agency rain gauges** (`ea_rain`) | rain **amounts** (mm, tipping-bucket) | 15 min | **England only**; gauges go dormant; occasional garbage readings (QC'd at normalisation) |
 | **SEPA rain gauges** (`sepa_rain`) | rain **amounts** (mm, tipping-bucket) — **Scotland's** equivalent of `ea_rain` | 15 min | Scotland only; same dormancy/QC caveats as EA (identical treatment at normalisation) |
+| **NRW rain gauges** (`nrw_rain`) | rain **amounts** (mm, tipping-bucket) — **Wales's** equivalent | 15 min | Wales only; needs the free `NRW_API_KEY`; station "Online" status lies — liveness comes from `latestTime` |
 | **METAR airport reports** (`metar`) | temperature, wind — as an independent cross-check | ~30 min | integer °C only; no rain amounts (occurrence codes only); airports ≠ towns |
 | **ERA5 reanalysis** (`era5`) | *everything*, as interim truth for the 2024–26 backfill | hourly, ~5-day lag | it is itself a **model** product — see below |
 
@@ -120,7 +121,9 @@ Each location is a **station bundle**:
 2. the nearest *live* EA rain gauge (England only),
 3. the nearest *live* SEPA rain gauge (Scotland only; added 2026-07-05 by
    `scripts/add_sepa_gauges.py`, carrying the pre-resolved KiWIS `ts_id`),
-4. the nearest METAR airport within 40 km (where one exists).
+4. the nearest *live* NRW rain gauge (Wales only; added 2026-07-05 by
+   `scripts/add_nrw_gauges.py`, carrying the per-station rainfall `parameter` ID),
+5. the nearest METAR airport within 40 km (where one exists).
 
 Current registry (`data/stations.json`, built 2026-07-04): **33 stations — 23 England,
 6 Scotland, 2 Wales, 2 Northern Ireland.** Interactive map:
@@ -128,15 +131,14 @@ Current registry (`data/stations.json`, built 2026-07-04): **33 stations — 23 
 
 Coverage is **not uniform**, and this shapes what can be verified where:
 
-- **Rain amounts**: 30 of 33 stations — 24 with an EA gauge (England plus one Welsh
-  station) and, since 2026-07-05, all **6 Scottish stations via SEPA gauges** (nearest
-  live gauge 0.2–14.1 km; Edinburgh's is Gogarbank, 200 m from the Met Office station).
-  Still without rain-amount truth: **both NI stations and Bangor (Wales)**. NI has no
-  free gauge API. Wales's is NRW's "River Level, Rainfall and Sea data" API — open data,
-  but it needs a free account at
-  [api-portal.naturalresources.wales](https://api-portal.naturalresources.wales) to get
-  a subscription key, so it is pending that sign-up. It would also fix a quiet wart:
-  Cardiff's "EA" gauge is 22.6 km away **across the Bristol Channel in Somerset**.
+- **Rain amounts**: **31 of 33 stations** (since 2026-07-05) — 24 with an EA gauge
+  (England plus one Welsh station), all **6 Scottish stations via SEPA gauges**
+  (nearest live gauge 0.2–14.1 km; Edinburgh's is Gogarbank, 200 m from the Met
+  Office station), and both **Welsh stations via NRW gauges** (Bangor→Llyn Cefni
+  3.2 km, Cardiff→Llantwit Major 4.5 km). The NRW pairing also fixes a quiet wart:
+  Cardiff's "EA" gauge is 22.6 km away **across the Bristol Channel in Somerset** —
+  it is kept for continuity, but `nrw_rain` is the credible rain truth there.
+  Still without rain-amount truth: **the two NI stations** (no free gauge API found).
 - **METAR cross-check**: 25 of 33 stations have a paired airport; 8 don't.
 - **Temperature/wind**: all 33 stations (that's the health-check criterion).
 - Each station carries `country` (the four UK nations — the main regional segmentation
@@ -163,7 +165,8 @@ All free, all within ~10× headroom at current volumes
 | Met Office Land Obs | **360 calls/day** (the binding constraint) | ~130/day (33 stations × 4 runs) | DataHub T&Cs: derived metrics publishable, raw feeds not redistributable |
 | EA flood-monitoring | fair use, keyless | ~130/day | Open Government Licence |
 | SEPA KiWIS time series | fair use, keyless | 4/day (all gauges per call) | Open Government Licence, attribute SEPA |
+| NRW rivers-and-seas | fair use; free subscription key (`NRW_API_KEY`, `Ocp-Apim-Subscription-Key` header) | 8/day (one per gauge per run) | open data via [api-portal.naturalresources.wales](https://api-portal.naturalresources.wales) |
 | NOAA METAR | ≤100 req/min, keyless | 4/day | public domain |
 
-Conventions: identifying User-Agent everywhere (`wpq/config.py`), the Met Office key
-lives in `.env` / an Actions secret and is never committed or logged.
+Conventions: identifying User-Agent everywhere (`wpq/config.py`); the Met Office and
+NRW keys live in `.env` / Actions secrets and are never committed or logged.

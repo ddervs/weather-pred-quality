@@ -49,8 +49,10 @@ Every acronym and term of art used in this repo, in plain English. Grouped by th
   protocol of KISTERS' water-data platform, used by many hydrology agencies) at
   `timeseries.sepa.org.uk`. Wired in 2026-07-05 as `sepa_rain` — rain-amount truth for
   all 6 Scottish stations.
-- **NRW** — Natural Resources Wales, the Welsh equivalent. Open data but needs a free
-  account/subscription key from their API portal; not yet wired in (pending sign-up).
+- **NRW** — Natural Resources Wales, the Welsh equivalent. ~150 rain gauges, 15-minute
+  mm totals via their "rivers-and-seas" API; open data but needs a free subscription
+  key (`NRW_API_KEY`). Wired in 2026-07-05 as `nrw_rain` — rain-amount truth for both
+  Welsh stations.
 - **METAR** — the standard aviation weather report format, issued ~half-hourly by
   airports. Fetched keyless from NOAA. **ICAO code** — the 4-letter airport identifier
   in a METAR (Heathrow = `EGLL`).

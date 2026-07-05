@@ -17,9 +17,9 @@ hover for station details). Regenerate after registry changes with
 `uv run scripts/make_station_map.py --screenshot`.*
 
 - [`data/stations.json`](data/stations.json) — 33 health-checked verification locations
-  (Met Office land-obs station + EA/SEPA rain gauge + METAR airport bundles)
+  (Met Office land-obs station + EA/SEPA/NRW rain gauge + METAR airport bundles)
 - [`wpq/`](wpq/) — collector fetching UKMO forecasts + MOGREPS ensembles (via Open-Meteo),
-  Met Office observations, EA + SEPA rain gauges and METARs into `data/raw/` as gzipped JSON,
+  Met Office observations, EA/SEPA/NRW rain gauges and METARs into `data/raw/` as gzipped JSON,
   every 6 h via [GitHub Actions](.github/workflows/collect.yml) (ensembles at 00Z/12Z)
 - [`scripts/backfill_ukmo.py`](scripts/backfill_ukmo.py) — one-off 2024→now backfill of
   lead-stratified UKMO forecasts + ERA5 truth; [`scripts/smoke_metrics.py`](scripts/smoke_metrics.py)

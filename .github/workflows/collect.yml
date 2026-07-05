@@ -28,6 +28,7 @@ jobs:
       - name: Collect forecasts and observations
         env:
           MET_OFFICE_LAND_OBS_API_KEY: ${{ secrets.MET_OFFICE_LAND_OBS_API_KEY }}
+          NRW_API_KEY: ${{ secrets.NRW_API_KEY }}
         run: uv run python -m wpq.collect
 
       - name: Commit raw data

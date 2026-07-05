@@ -16,14 +16,14 @@ forecasts.parquet
     member      ensemble member (0 = control), null for deterministic
 
 observations.parquet
-    source      'era5' | 'land_obs' | 'ea_rain' | 'sepa_rain' | 'metar'
+    source      'era5' | 'land_obs' | 'ea_rain' | 'sepa_rain' | 'nrw_rain' | 'metar'
     station_id, valid_time, variable, value as above
 
 Variable vocabulary and units — ALL unit conversion happens here:
     temp_c        deg C.  Open-Meteo/ERA5 native; land_obs native (0.01 C resolution);
                   METAR integer C.
     precip_mm     mm accumulated over the hour PRECEDING valid_time (Open-Meteo
-                  convention). EA and SEPA 15-min readings (both mm totals for the
+                  convention). EA/SEPA/NRW 15-min readings (all mm totals for the
                   15 min ENDING at their timestamp) are summed into that window; an
                   hour needs all four 15-min slices to count. QC: negative readings
                   clamped to 0, single readings > 20 mm/15min discarded as absurd.
@@ -31,7 +31,7 @@ Variable vocabulary and units — ALL unit conversion happens here:
                   land_obs already m/s (verified empirically 2026-07-05 against
                   co-located METAR at 8 airports - values match kt->m/s conversion).
     gust_ms       m/s, same conversions as wind_ms.
-    rain_occurred 0/1. era5/ea_rain/sepa_rain: hourly precip_mm >= 0.1. land_obs: Met Office
+    rain_occurred 0/1. era5 and the rain gauges: hourly precip_mm >= 0.1. land_obs: Met Office
                   significant-weather code in the liquid-precip set {9..18, 28..30}
                   (rain/drizzle/sleet/thunder; hail+snow excluded). metar: wxString
                   contains RA or DZ - instantaneous at obs time, not an hourly
@@ -273,7 +273,8 @@ def gauge_hours(source: str, readings: dict[tuple[str, datetime], float]) -> pl.
     """QC'd 15-min gauge readings -> hourly precip_mm + rain_occurred rows.
 
     Hour ending H covers readings at H-45, H-30, H-15, H+0; needs all four slices.
-    Shared by EA (England) and SEPA (Scotland) — same tipping-bucket semantics.
+    Shared by EA (England), SEPA (Scotland) and NRW (Wales) — same tipping-bucket
+    semantics.
     """
     hours: dict[tuple[str, datetime], list[float]] = {}
     for (sid, t), v in readings.items():
@@ -335,6 +336,24 @@ def load_sepa_rain(stations: list[dict]) -> pl.DataFrame:
     return gauge_hours("sepa_rain", readings)
 
 
+def load_nrw_rain(stations: list[dict]) -> pl.DataFrame:
+    gid_to_sid = {str(s["nrw_gauge"]["station_id"]): s["id"]
+                  for s in stations if s.get("nrw_gauge")}
+    readings: dict[tuple[str, datetime], float] = {}
+    for path in sorted((DATA_DIR / "raw" / "nrw_rain").glob("*/*.json.gz")):
+        for gid, obj in read_gz(path).items():
+            sid = gid_to_sid.get(gid)
+            if sid is None or not obj:
+                continue
+            for item in obj.get("parameterReadings", []):
+                v = qc_15min(item.get("value"))
+                if v is None:
+                    continue
+                t = datetime.fromisoformat(item["time"].replace("Z", ""))
+                readings[(sid, t)] = v  # keep-last across overlapping fetches
+    return gauge_hours("nrw_rain", readings)
+
+
 def load_metar(stations: list[dict]) -> pl.DataFrame:
     icao_to_sids: dict[str, list[str]] = {}
     for s in stations:
@@ -390,6 +409,7 @@ def main() -> None:
         load_land_obs(stations),
         load_ea_rain(stations),
         load_sepa_rain(stations),
+        load_nrw_rain(stations),
         load_metar(stations),
     ]).sort(["source", "station_id", "variable", "valid_time"])
     observations.write_parquet(NORM_DIR / "observations.parquet", compression="zstd")

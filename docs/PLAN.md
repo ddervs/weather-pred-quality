@@ -8,7 +8,7 @@ reality (`git log`, `ls data/`), then start the **Next chunk**.
 
 Verify UK weather forecasts against observations; publish reliability scores segmented by
 region / lead time / variable. v1 scope: **UKMO model forecasts only** (via Open-Meteo),
-ground truth = Met Office land obs + EA/SEPA rain gauges + METAR. Strictly £0. No BBC. North
+ground truth = Met Office land obs + EA/SEPA/NRW rain gauges + METAR. Strictly £0. No BBC. North
 star (docs/research/00-overview.md): calibrated probabilistic UK map, conformal guarantees.
 Living guide docs: docs/README.md (overview / data-sources / data-layout / methodology /
 glossary); research archive: docs/research/; dated findings: docs/results/.
@@ -27,11 +27,17 @@ but only after everything works privately** (his explicit preference, 2026-07-04
   stations paired via `scripts/add_sepa_gauges.py` (stations.json now carries
   `sepa_gauge` with pre-resolved `ts_id`; registry builder updated for future
   rebuilds). Verified end-to-end: 6 stations × ~29 h of precip_mm flowing, pairs
-  in metrics.parquet. **NRW (Wales) still pending**: open data but needs a free
-  account at api-portal.naturalresources.wales → subscription key
-  (`Ocp-Apim-Subscription-Key`) — waiting on Danial to sign up; then Bangor +
-  Cardiff get Welsh gauges (Cardiff's current EA gauge is across the Bristol
-  Channel in Somerset, 22.6 km). NI: no free gauge API found.
+  in metrics.parquet. NI: no free gauge API found.
+- **NRW rain gauges wired in** (2026-07-05, same day — Danial signed up and put
+  `NRW_API_KEY` in `.env`; secret pushed to Actions via `gh secret set`, collect.yml
+  passes it): new collector source `nrw_rain`, one windowed call per Welsh gauge
+  (`from`/`to` dates are the ONLY window params the historical endpoint honours —
+  unwindowed = a full year, 1.5 MB). Bangor→Llyn Cefni (3.2 km), Cardiff→Llantwit
+  Major (4.5 km; Cardiff's old EA gauge — 22.6 km away in Somerset — kept for
+  continuity but nrw_rain is the credible truth there). `load_nrw_rain` shares the
+  gauge helpers; verified end-to-end into metrics.parquet. Gotchas: NRW `statusEN`
+  lies (liveness = parameter `latestTime`), Rainfall parameter IDs are per-station.
+  **Rain-amount truth now covers 31/33 stations** (all but the 2 NI ones).
 - **Docs reorganised** (2026-07-05, side task): living guide docs
   (docs/{overview,data-sources,data-layout,methodology,glossary}.md + docs/README.md
   index), dated findings moved to docs/results/, research phase preserved verbatim in
@@ -138,10 +144,8 @@ artifact); public Pages + personal site only when Danial says so.
    existing Brier-decomposition code, add to metrics + dashboard. Also redo the
    headline tables vs live obs truth (land_obs/EA/METAR) as the ERA5 credibility
    check — docs/results/2026-07-05-calibration.md caveat.
-2. ~~SEPA gauges~~ DONE 2026-07-05. **NRW gauges** for Wales rain truth — blocked on
-   Danial creating a free account at api-portal.naturalresources.wales (key goes in
-   `.env` + Actions secret as `NRW_API_KEY`); then wire like SEPA and re-pair
-   Bangor/Cardiff.
+2. ~~SEPA/NRW gauges~~ DONE 2026-07-05 (both). GB rain-amount truth complete;
+   only the 2 NI stations lack it (no free gauge API).
 3. **v1.5 data**: Met Office DataHub site-specific product into collector ("model vs
    app product"); widen Open-Meteo model list (ECMWF/ICON/GFS…) — schema already copes.
 4. **Ops**: monthly station health report from collected data; repo-size watch
@@ -151,7 +155,8 @@ artifact); public Pages + personal site only when Danial says so.
 
 ## Conventions
 
-- Zero cost, ToS-polite, `.env` never committed, key never printed/logged.
+- Zero cost, ToS-polite, `.env` never committed, keys (Met Office, NRW) never
+  printed/logged.
 - Always `git pull --rebase` before pushing (the collector bot commits to main).
 - Commit messages end with the Claude Co-Authored-By line.
 - Data decisions that surprised us get recorded in docs/data-layout.md (payload/unit

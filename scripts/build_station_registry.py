@@ -6,7 +6,9 @@ For ~35 seed cities across UK regions:
   2. pair it with the nearest *live* EA rain gauge (England only; readings in last 24h),
   3. pair Scottish stations with the nearest *live* SEPA rain gauge (15-min Precip
      series with data in the last 24h — dormant gauges are skipped),
-  4. pair it with the nearest METAR airport within 40 km.
+  4. pair Welsh stations with the nearest *live* NRW rain gauge (same 24h rule;
+     needs NRW_API_KEY),
+  5. pair it with the nearest METAR airport within 40 km.
 
 Stations failing the health check are dropped. Locations are the *station* positions
 (decoded geohash centres), not the city centres. Run once; re-run only deliberately —
@@ -30,6 +32,7 @@ from wpq.fetchers import (
     fetch_land_obs,
     fetch_metar,
     fetch_nearest_land_station,
+    fetch_nrw_stations,
     fetch_sepa_precip_stations,
     fetch_sepa_ts_meta,
 )
@@ -130,6 +133,37 @@ def pick_sepa_gauge(lat: float, lon: float, gauges: list[dict]) -> dict | None:
     return None
 
 
+def pick_nrw_gauge(lat: float, lon: float, nrw_stations: list[dict]) -> dict | None:
+    """Nearest NRW gauge whose Rainfall parameter reported in the last 24h (Wales).
+
+    `nrw_stations` is fetch_nrw_stations() output — latestTime is right there, so
+    liveness costs no extra calls. Rainfall parameter IDs are PER-STATION; stored in
+    the registry so the collector can query without a lookup.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    live = []
+    for s in nrw_stations:
+        rain = next((p for p in s.get("parameters", [])
+                     if p.get("paramNameEN") == "Rainfall"), None)
+        if (not rain or not rain.get("latestTime")
+                or s.get("latitude") is None or s.get("longitude") is None):
+            continue
+        if datetime.fromisoformat(rain["latestTime"].replace("Z", "+00:00")) <= cutoff:
+            continue  # statusEN lies ("Online" on gauges dead since 2023) — trust latestTime
+        live.append((haversine_km(lat, lon, s["latitude"], s["longitude"]), s, rain))
+    if not live:
+        return None
+    dist, s, rain = min(live, key=lambda t: t[0])
+    return {
+        "station_id": s["stationId"],
+        "name": s["nameEN"],
+        "parameter": rain["parameter"],
+        "lat": round(s["latitude"], 6),
+        "lon": round(s["longitude"], 6),
+        "distance_km": round(dist, 1),
+    }
+
+
 def main() -> None:
     # 1. Discover + dedupe Met Office stations
     stations: dict[str, dict] = {}
@@ -164,14 +198,19 @@ def main() -> None:
             print(f"  DROP {station['seed_city']} ({gh}): only {n_temp}/48 temperature entries")
     print(f"{len(healthy)} stations pass health check")
 
-    # 3. Pair EA gauge (England) + SEPA gauge (Scotland) + METAR
+    # 3. Pair EA gauge (England) + SEPA gauge (Scotland) + NRW gauge (Wales) + METAR
     live_metars = {m.get("icaoId") for m in fetch_metar([a[0] for a in METAR_AIRPORTS], hours=3)}
     sepa_gauges = fetch_sepa_precip_stations()
+    nrw_stations = fetch_nrw_stations()
     for gh, station in healthy.items():
         station["ea_gauge"] = pick_live_gauge(station["lat"], station["lon"])
         station["sepa_gauge"] = (
             pick_sepa_gauge(station["lat"], station["lon"], sepa_gauges)
             if station.get("country") == "Scotland" else None
+        )
+        station["nrw_gauge"] = (
+            pick_nrw_gauge(station["lat"], station["lon"], nrw_stations)
+            if station.get("country") == "Wales" else None
         )
         icao, dist = min(
             ((a, haversine_km(station["lat"], station["lon"], alat, alon))
@@ -183,8 +222,10 @@ def main() -> None:
         )
         gauge = station["ea_gauge"]
         sepa = station["sepa_gauge"]
+        nrw = station["nrw_gauge"]
         print(f"  {station['seed_city']:<14} gauge={'%s @%skm' % (gauge['station_reference'], gauge['distance_km']) if gauge else '-':<22} "
               f"sepa={'%s @%skm' % (sepa['name'], sepa['distance_km']) if sepa else '-':<28} "
+              f"nrw={'%s @%skm' % (nrw['name'], nrw['distance_km']) if nrw else '-':<28} "
               f"metar={station['metar']['icao'] if station['metar'] else '-'}")
 
     STATIONS_FILE.parent.mkdir(exist_ok=True)

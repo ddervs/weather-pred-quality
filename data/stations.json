@@ -22,7 +22,8 @@
     "lat": 57.147569,
     "lon": -2.291989,
     "distance_km": 8.7
-   }
+   },
+   "nrw_gauge": null
   },
   {
    "id": "gckyur",
@@ -34,7 +35,15 @@
    "country": "Wales",
    "ea_gauge": null,
    "metar": null,
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": {
+    "station_id": 1027,
+    "name": "Llyn Cefni",
+    "parameter": 10122,
+    "lat": 53.268208,
+    "lon": -4.333276,
+    "distance_km": 3.2
+   }
   },
   {
    "id": "gcewfr",
@@ -49,7 +58,8 @@
     "icao": "EGAA",
     "distance_km": 1.0
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcqf99",
@@ -69,7 +79,8 @@
     "icao": "EGBB",
     "distance_km": 5.0
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcpc1q",
@@ -89,7 +100,8 @@
     "icao": "EGKA",
     "distance_km": 0.4
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcnjmb",
@@ -109,7 +121,8 @@
     "icao": "EGGD",
     "distance_km": 21.9
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcr9j7",
@@ -126,7 +139,8 @@
     "distance_km": 0.2
    },
    "metar": null,
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcjs3t",
@@ -146,7 +160,15 @@
     "icao": "EGFF",
     "distance_km": 7.0
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": {
+    "station_id": 1137,
+    "name": "Llantwit Major",
+    "parameter": 10232,
+    "lat": 51.414662,
+    "lon": -3.505849,
+    "distance_km": 4.5
+   }
   },
   {
    "id": "gcvbs8",
@@ -163,7 +185,8 @@
     "distance_km": 4.0
    },
    "metar": null,
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcg1cc",
@@ -175,7 +198,8 @@
    "country": "Northern Ireland",
    "ea_gauge": null,
    "metar": null,
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "u10fys",
@@ -195,7 +219,8 @@
     "icao": "EGMD",
     "distance_km": 34.6
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcvw5v",
@@ -217,7 +242,8 @@
     "lat": 55.92834,
     "lon": -3.342743,
     "distance_km": 0.2
-   }
+   },
+   "nrw_gauge": null
   },
   {
    "id": "gcj8ds",
@@ -237,7 +263,8 @@
     "icao": "EGTE",
     "distance_km": 1.0
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gfh7qb",
@@ -256,7 +283,8 @@
     "lat": 56.799232,
     "lon": -5.067543,
     "distance_km": 6.5
-   }
+   },
+   "nrw_gauge": null
   },
   {
    "id": "gcuy0c",
@@ -278,7 +306,8 @@
     "lat": 55.911085,
     "lon": -4.305014,
     "distance_km": 14.1
-   }
+   },
+   "nrw_gauge": null
   },
   {
    "id": "gcxdqn",
@@ -298,7 +327,8 @@
     "icao": "EGNJ",
     "distance_km": 33.2
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gfjm2y",
@@ -320,7 +350,8 @@
     "lat": 57.273998,
     "lon": -3.875997,
     "distance_km": 7.8
-   }
+   },
+   "nrw_gauge": null
   },
   {
    "id": "gcwdje",
@@ -340,7 +371,8 @@
     "icao": "EGNM",
     "distance_km": 14.7
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcrws0",
@@ -360,7 +392,8 @@
     "icao": "EGXW",
     "distance_km": 1.2
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gctb66",
@@ -380,7 +413,8 @@
     "icao": "EGGP",
     "distance_km": 22.7
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcpsvg",
@@ -400,7 +434,8 @@
     "icao": "EGLL",
     "distance_km": 1.2
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcqr9c",
@@ -420,7 +455,8 @@
     "icao": "EGCC",
     "distance_km": 6.9
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcy9j0",
@@ -440,7 +476,8 @@
     "icao": "EGNT",
     "distance_km": 12.4
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "u12f6m",
@@ -460,7 +497,8 @@
     "icao": "EGSH",
     "distance_km": 25.7
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcrje9",
@@ -480,7 +518,8 @@
     "icao": "EGNX",
     "distance_km": 20.2
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcpjxj",
@@ -497,7 +536,8 @@
     "distance_km": 1.6
    },
    "metar": null,
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gbujwt",
@@ -514,7 +554,8 @@
     "distance_km": 2.2
    },
    "metar": null,
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gbvn6n",
@@ -531,7 +572,8 @@
     "distance_km": 7.0
    },
    "metar": null,
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcwc40",
@@ -551,7 +593,8 @@
     "icao": "EGNM",
     "distance_km": 27.8
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcqh76",
@@ -571,7 +614,8 @@
     "icao": "EGOS",
     "distance_km": 0.7
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gcnfur",
@@ -591,7 +635,8 @@
     "icao": "EGHI",
     "distance_km": 26.5
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   },
   {
    "id": "gf7e0j",
@@ -613,7 +658,8 @@
     "lat": 58.20454,
     "lon": -6.424228,
     "distance_km": 6.0
-   }
+   },
+   "nrw_gauge": null
   },
   {
    "id": "gcxh27",
@@ -633,7 +679,8 @@
     "icao": "EGNV",
     "distance_km": 34.1
    },
-   "sepa_gauge": null
+   "sepa_gauge": null,
+   "nrw_gauge": null
   }
  ]
 }

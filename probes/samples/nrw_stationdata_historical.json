@@ -1,0 +1,116 @@
+{
+ "1027": {
+  "coordinates": {
+   "latitude": 53.268208,
+   "longitude": -4.3332764
+  },
+  "location": 1027,
+  "nameEN": "Llyn Cefni",
+  "nameCY": "Llyn Cefni",
+  "statusEN": "Online",
+  "statusCY": "Ar-lein",
+  "url": "rivers-and-seas.naturalresources.wales/station/1027",
+  "ngr": "SH4449077120",
+  "parameter": 10122,
+  "paramNameEN": "Rainfall",
+  "paramNameCY": "Glawiad",
+  "titleEN": "Llyn Cefni raingauge",
+  "titleCY": "Mesurydd glaw Llyn Cefni",
+  "parameterStatusEN": "Rainfall Dry",
+  "parameterStatusCY": "Drws glaw",
+  "units": "mm",
+  "latitude": 53.268208,
+  "longitude": -4.3332764,
+  "parameterReadings": [
+   {
+    "value": 0,
+    "time": "2026-07-05T16:30:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T16:45:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T17:00:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T17:15:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T17:30:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T17:45:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T18:00:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T18:15:00Z"
+   }
+  ]
+ },
+ "1137": {
+  "coordinates": {
+   "latitude": 51.414662,
+   "longitude": -3.5058489
+  },
+  "location": 1137,
+  "nameEN": "Llantwit Major",
+  "nameCY": "Llantwit Major",
+  "statusEN": "Online",
+  "statusCY": "Ar-lein",
+  "url": "rivers-and-seas.naturalresources.wales/station/1137",
+  "ngr": "SS9537669481",
+  "parameter": 10232,
+  "paramNameEN": "Rainfall",
+  "paramNameCY": "Glawiad",
+  "titleEN": "Llantwit Major raingauge",
+  "titleCY": "Mesurydd glaw Llanilltud Fawr",
+  "parameterStatusEN": "Rainfall Dry",
+  "parameterStatusCY": "Drws glaw",
+  "units": "mm",
+  "latitude": 51.414662,
+  "longitude": -3.5058489,
+  "parameterReadings": [
+   {
+    "value": 0,
+    "time": "2026-07-05T16:45:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T17:00:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T17:15:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T17:30:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T17:45:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T18:00:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T18:15:00Z"
+   },
+   {
+    "value": 0,
+    "time": "2026-07-05T18:30:00Z"
+   }
+  ]
+ }
+}

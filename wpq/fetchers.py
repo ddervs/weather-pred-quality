@@ -5,6 +5,7 @@ shared session, identifying User-Agent, small sleeps between per-station loops.
 """
 
 import time
+from datetime import datetime, timedelta, timezone
 
 import requests
 
@@ -17,6 +18,7 @@ OPEN_METEO_ARCHIVE = "https://archive-api.open-meteo.com/v1/archive"
 MET_OFFICE_OBS = "https://data.hub.api.metoffice.gov.uk/observation-land/1"
 EA_FLOOD = "https://environment.data.gov.uk/flood-monitoring"
 SEPA_KIWIS = "https://timeseries.sepa.org.uk/KiWIS/KiWIS"
+NRW_RIVERS_SEAS = "https://api.naturalresources.wales/rivers-and-seas/v1/api"
 AWC_METAR = "https://aviationweather.gov/api/data/metar"
 
 UKMO_HOURLY_VARS = [
@@ -144,6 +146,38 @@ def fetch_sepa_readings(ts_ids: list[str], period: str = "PT30H") -> list[dict]:
         returnfields="Timestamp,Value", metadata="true",
         md_returnfields="station_no,station_name,ts_id,ts_unitsymbol",
     )
+
+
+def fetch_nrw_stations() -> list[dict]:
+    """All NRW monitoring stations (~409; ~150 carry a Rainfall parameter), one call.
+
+    Each station's parameters[] include latestTime — the real liveness signal
+    (statusEN says "Online" even for gauges dead since 2023).
+    """
+    headers = {"Ocp-Apim-Subscription-Key": get_env("NRW_API_KEY")}
+    return _get_json(f"{NRW_RIVERS_SEAS}/StationData", headers=headers)
+
+
+def fetch_nrw_readings(gauges: list[dict]) -> dict:
+    """15-min rainfall (mm) per gauge, one call each, ~last 30 h.
+
+    The historical endpoint returns a FULL YEAR (~35k readings, 1.5 MB) unless
+    windowed; `from`/`to` (dates, `to` end-exclusive) are the only params it
+    honours. Rainfall parameter IDs are per-station — taken from the gauge dict.
+    """
+    headers = {"Ocp-Apim-Subscription-Key": get_env("NRW_API_KEY")}
+    now = datetime.now(timezone.utc)
+    window = {"from": (now - timedelta(hours=30)).date().isoformat(),
+              "to": (now + timedelta(days=1)).date().isoformat()}
+    out = {}
+    for g in gauges:
+        out[str(g["station_id"])] = _get_json(
+            f"{NRW_RIVERS_SEAS}/StationData/historical",
+            {"location": g["station_id"], "parameter": g["parameter"], **window},
+            headers=headers,
+        )
+        time.sleep(0.2)
+    return out
 
 
 def fetch_metar(icaos: list[str], hours: int = 6) -> list:
