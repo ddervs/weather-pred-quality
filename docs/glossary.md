@@ -42,9 +42,15 @@ Every acronym and term of art used in this repo, in plain English. Grouped by th
   temperature, wind, humidity, visibility, pressure, weather code. No rain amounts on
   the free tier.
 - **EA** — Environment Agency (England). Its flood-monitoring API exposes ~thousands of
-  tipping-bucket rain gauges: 15-minute rainfall amounts in mm. Our rain-amount truth.
-  **SEPA** / **NRW** — the Scottish and Welsh equivalents (Scottish Environment
-  Protection Agency, Natural Resources Wales); planned, not yet wired in.
+  tipping-bucket rain gauges: 15-minute rainfall amounts in mm. Our rain-amount truth
+  for England.
+- **SEPA** — Scottish Environment Protection Agency: the Scottish equivalent of the EA.
+  ~380 rain gauges, 15-minute mm totals, keyless, via a **KiWIS** API (the query
+  protocol of KISTERS' water-data platform, used by many hydrology agencies) at
+  `timeseries.sepa.org.uk`. Wired in 2026-07-05 as `sepa_rain` — rain-amount truth for
+  all 6 Scottish stations.
+- **NRW** — Natural Resources Wales, the Welsh equivalent. Open data but needs a free
+  account/subscription key from their API portal; not yet wired in (pending sign-up).
 - **METAR** — the standard aviation weather report format, issued ~half-hourly by
   airports. Fetched keyless from NOAA. **ICAO code** — the 4-letter airport identifier
   in a METAR (Heathrow = `EGLL`).

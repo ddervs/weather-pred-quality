@@ -28,8 +28,8 @@ foundation: verify one provider's forecasts honestly.
   Ireland, each anchored at a real observation station (see
   [data-sources.md](data-sources.md)).
 - **Ground truth**: real station observations (Met Office land stations, Environment
-  Agency rain gauges, airport METAR reports), plus the ERA5 reanalysis as an interim
-  stand-in while live observations accumulate.
+  Agency and SEPA rain gauges, airport METAR reports), plus the ERA5 reanalysis as an
+  interim stand-in while live observations accumulate.
 - **Budget: strictly £0.** Free API tiers only, polite usage, GitHub Actions for compute,
   the git repo itself for storage.
 - Other providers (ECMWF, ICON, GFS, met.no, the Met Office *app* product…) are designed
@@ -42,7 +42,7 @@ foundation: verify one provider's forecasts honestly.
                     every 6 h (GitHub Actions: collect.yml)
   Open-Meteo (UKMO forecast + ensemble) ─┐
   Met Office land observations ──────────┤
-  EA rain gauges ────────────────────────┼──►  data/raw/{source}/{date}/{HHMM}Z.json.gz
+  EA + SEPA rain gauges ─────────────────┼──►  data/raw/{source}/{date}/{HHMM}Z.json.gz
   METAR airport reports ─────────────────┘        (immutable gzipped JSON archive)
 
                     one-off backfill (scripts/backfill_ukmo.py)

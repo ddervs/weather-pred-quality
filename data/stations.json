@@ -14,6 +14,14 @@
    "metar": {
     "icao": "EGPD",
     "distance_km": 0.8
+   },
+   "sepa_gauge": {
+    "station_no": "115250",
+    "name": "Westhill",
+    "ts_id": "51642010",
+    "lat": 57.147569,
+    "lon": -2.291989,
+    "distance_km": 8.7
    }
   },
   {
@@ -25,7 +33,8 @@
    "region": "wl",
    "country": "Wales",
    "ea_gauge": null,
-   "metar": null
+   "metar": null,
+   "sepa_gauge": null
   },
   {
    "id": "gcewfr",
@@ -39,7 +48,8 @@
    "metar": {
     "icao": "EGAA",
     "distance_km": 1.0
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcqf99",
@@ -58,7 +68,8 @@
    "metar": {
     "icao": "EGBB",
     "distance_km": 5.0
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcpc1q",
@@ -77,7 +88,8 @@
    "metar": {
     "icao": "EGKA",
     "distance_km": 0.4
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcnjmb",
@@ -96,7 +108,8 @@
    "metar": {
     "icao": "EGGD",
     "distance_km": 21.9
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcr9j7",
@@ -112,7 +125,8 @@
     "lon": -0.464875,
     "distance_km": 0.2
    },
-   "metar": null
+   "metar": null,
+   "sepa_gauge": null
   },
   {
    "id": "gcjs3t",
@@ -131,7 +145,8 @@
    "metar": {
     "icao": "EGFF",
     "distance_km": 7.0
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcvbs8",
@@ -147,7 +162,8 @@
     "lon": -2.953493,
     "distance_km": 4.0
    },
-   "metar": null
+   "metar": null,
+   "sepa_gauge": null
   },
   {
    "id": "gcg1cc",
@@ -158,7 +174,8 @@
    "region": "ni",
    "country": "Northern Ireland",
    "ea_gauge": null,
-   "metar": null
+   "metar": null,
+   "sepa_gauge": null
   },
   {
    "id": "u10fys",
@@ -177,7 +194,8 @@
    "metar": {
     "icao": "EGMD",
     "distance_km": 34.6
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcvw5v",
@@ -191,6 +209,14 @@
    "metar": {
     "icao": "EGPH",
     "distance_km": 2.9
+   },
+   "sepa_gauge": {
+    "station_no": "15196",
+    "name": "Gogarbank",
+    "ts_id": "56594010",
+    "lat": 55.92834,
+    "lon": -3.342743,
+    "distance_km": 0.2
    }
   },
   {
@@ -210,7 +236,8 @@
    "metar": {
     "icao": "EGTE",
     "distance_km": 1.0
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gfh7qb",
@@ -221,7 +248,15 @@
    "region": "he",
    "country": "Scotland",
    "ea_gauge": null,
-   "metar": null
+   "metar": null,
+   "sepa_gauge": {
+    "station_no": "115343",
+    "name": "Glen Nevis",
+    "ts_id": "51764010",
+    "lat": 56.799232,
+    "lon": -5.067543,
+    "distance_km": 6.5
+   }
   },
   {
    "id": "gcuy0c",
@@ -235,6 +270,14 @@
    "metar": {
     "icao": "EGPF",
     "distance_km": 7.3
+   },
+   "sepa_gauge": {
+    "station_no": "341380",
+    "name": "Killermont Raingauge",
+    "ts_id": "59193010",
+    "lat": 55.911085,
+    "lon": -4.305014,
+    "distance_km": 14.1
    }
   },
   {
@@ -254,7 +297,8 @@
    "metar": {
     "icao": "EGNJ",
     "distance_km": 33.2
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gfjm2y",
@@ -268,6 +312,14 @@
    "metar": {
     "icao": "EGPE",
     "distance_km": 39.4
+   },
+   "sepa_gauge": {
+    "station_no": "234314",
+    "name": "Sluggan",
+    "ts_id": "58300010",
+    "lat": 57.273998,
+    "lon": -3.875997,
+    "distance_km": 7.8
    }
   },
   {
@@ -287,7 +339,8 @@
    "metar": {
     "icao": "EGNM",
     "distance_km": 14.7
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcrws0",
@@ -306,7 +359,8 @@
    "metar": {
     "icao": "EGXW",
     "distance_km": 1.2
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gctb66",
@@ -325,7 +379,8 @@
    "metar": {
     "icao": "EGGP",
     "distance_km": 22.7
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcpsvg",
@@ -344,7 +399,8 @@
    "metar": {
     "icao": "EGLL",
     "distance_km": 1.2
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcqr9c",
@@ -363,7 +419,8 @@
    "metar": {
     "icao": "EGCC",
     "distance_km": 6.9
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcy9j0",
@@ -382,7 +439,8 @@
    "metar": {
     "icao": "EGNT",
     "distance_km": 12.4
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "u12f6m",
@@ -401,7 +459,8 @@
    "metar": {
     "icao": "EGSH",
     "distance_km": 25.7
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcrje9",
@@ -420,7 +479,8 @@
    "metar": {
     "icao": "EGNX",
     "distance_km": 20.2
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcpjxj",
@@ -436,7 +496,8 @@
     "lon": -1.115281,
     "distance_km": 1.6
    },
-   "metar": null
+   "metar": null,
+   "sepa_gauge": null
   },
   {
    "id": "gbujwt",
@@ -452,7 +513,8 @@
     "lon": -5.305022,
     "distance_km": 2.2
    },
-   "metar": null
+   "metar": null,
+   "sepa_gauge": null
   },
   {
    "id": "gbvn6n",
@@ -468,7 +530,8 @@
     "lon": -4.126049,
     "distance_km": 7.0
    },
-   "metar": null
+   "metar": null,
+   "sepa_gauge": null
   },
   {
    "id": "gcwc40",
@@ -487,7 +550,8 @@
    "metar": {
     "icao": "EGNM",
     "distance_km": 27.8
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcqh76",
@@ -506,7 +570,8 @@
    "metar": {
     "icao": "EGOS",
     "distance_km": 0.7
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gcnfur",
@@ -525,7 +590,8 @@
    "metar": {
     "icao": "EGHI",
     "distance_km": 26.5
-   }
+   },
+   "sepa_gauge": null
   },
   {
    "id": "gf7e0j",
@@ -539,6 +605,14 @@
    "metar": {
     "icao": "EGPO",
     "distance_km": 0.5
+   },
+   "sepa_gauge": {
+    "station_no": "234190",
+    "name": "Creed Bridge",
+    "ts_id": "57190010",
+    "lat": 58.20454,
+    "lon": -6.424228,
+    "distance_km": 6.0
    }
   },
   {
@@ -558,7 +632,8 @@
    "metar": {
     "icao": "EGNV",
     "distance_km": 34.1
-   }
+   },
+   "sepa_gauge": null
   }
  ]
 }

@@ -8,7 +8,7 @@ reality (`git log`, `ls data/`), then start the **Next chunk**.
 
 Verify UK weather forecasts against observations; publish reliability scores segmented by
 region / lead time / variable. v1 scope: **UKMO model forecasts only** (via Open-Meteo),
-ground truth = Met Office land obs + EA rain gauges + METAR. Strictly £0. No BBC. North
+ground truth = Met Office land obs + EA/SEPA rain gauges + METAR. Strictly £0. No BBC. North
 star (docs/research/00-overview.md): calibrated probabilistic UK map, conformal guarantees.
 Living guide docs: docs/README.md (overview / data-sources / data-layout / methodology /
 glossary); research archive: docs/research/; dated findings: docs/results/.
@@ -18,6 +18,20 @@ but only after everything works privately** (his explicit preference, 2026-07-04
 
 ## Current state (as of 2026-07-05, second chunk)
 
+- **SEPA rain gauges wired in** (2026-07-05, side task — was "later chunk 2"):
+  Scotland rain-amount truth now live. SEPA's KiWIS API (`timeseries.sepa.org.uk`,
+  keyless, OGL, attribute SEPA) → new collector source `sepa_rain` (ONE batched
+  getTimeseriesValues call for all gauges) → `load_sepa_rain` in normalize.py
+  (shares EA's hour-bucketing/QC via new `gauge_hours`/`qc_15min` helpers) →
+  flows through metrics automatically (`truth_source='sepa_rain'`). All 6 Scottish
+  stations paired via `scripts/add_sepa_gauges.py` (stations.json now carries
+  `sepa_gauge` with pre-resolved `ts_id`; registry builder updated for future
+  rebuilds). Verified end-to-end: 6 stations × ~29 h of precip_mm flowing, pairs
+  in metrics.parquet. **NRW (Wales) still pending**: open data but needs a free
+  account at api-portal.naturalresources.wales → subscription key
+  (`Ocp-Apim-Subscription-Key`) — waiting on Danial to sign up; then Bangor +
+  Cardiff get Welsh gauges (Cardiff's current EA gauge is across the Bristol
+  Channel in Somerset, 22.6 km). NI: no free gauge API found.
 - **Docs reorganised** (2026-07-05, side task): living guide docs
   (docs/{overview,data-sources,data-layout,methodology,glossary}.md + docs/README.md
   index), dated findings moved to docs/results/, research phase preserved verbatim in
@@ -124,7 +138,10 @@ artifact); public Pages + personal site only when Danial says so.
    existing Brier-decomposition code, add to metrics + dashboard. Also redo the
    headline tables vs live obs truth (land_obs/EA/METAR) as the ERA5 credibility
    check — docs/results/2026-07-05-calibration.md caveat.
-2. **SEPA/NRW gauges** for Scotland/Wales rain truth; re-pair those stations.
+2. ~~SEPA gauges~~ DONE 2026-07-05. **NRW gauges** for Wales rain truth — blocked on
+   Danial creating a free account at api-portal.naturalresources.wales (key goes in
+   `.env` + Actions secret as `NRW_API_KEY`); then wire like SEPA and re-pair
+   Bangor/Cardiff.
 3. **v1.5 data**: Met Office DataHub site-specific product into collector ("model vs
    app product"); widen Open-Meteo model list (ECMWF/ICON/GFS…) — schema already copes.
 4. **Ops**: monthly station health report from collected data; repo-size watch

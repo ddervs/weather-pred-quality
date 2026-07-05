@@ -16,6 +16,7 @@ OPEN_METEO_PREVIOUS = "https://previous-runs-api.open-meteo.com/v1/forecast"
 OPEN_METEO_ARCHIVE = "https://archive-api.open-meteo.com/v1/archive"
 MET_OFFICE_OBS = "https://data.hub.api.metoffice.gov.uk/observation-land/1"
 EA_FLOOD = "https://environment.data.gov.uk/flood-monitoring"
+SEPA_KIWIS = "https://timeseries.sepa.org.uk/KiWIS/KiWIS"
 AWC_METAR = "https://aviationweather.gov/api/data/metar"
 
 UKMO_HOURLY_VARS = [
@@ -105,6 +106,43 @@ def fetch_ea_readings(station_reference: str, limit: int = 120) -> dict:
     return _get_json(
         f"{EA_FLOOD}/id/stations/{station_reference}/readings",
         {"_sorted": "", "_limit": limit, "parameter": "rainfall"},
+    )
+
+
+def _sepa(request: str, **params) -> list:
+    """SEPA KiWIS query (keyless, OGL). timezone=UTC pinned; Z-suffixed timestamps."""
+    return _get_json(SEPA_KIWIS, {
+        "service": "kisters", "type": "queryServices", "datasource": "0",
+        "format": "json", "timezone": "UTC", "request": request, **params,
+    })
+
+
+def fetch_sepa_precip_stations() -> list[dict]:
+    """All SEPA precipitation gauges (~380, Scotland). One call."""
+    rows = _sepa(
+        "getStationList", parametertype_name="Precip",
+        returnfields="station_name,station_no,station_id,"
+                     "station_latitude,station_longitude",
+    )
+    return [dict(zip(rows[0], r)) for r in rows[1:]]
+
+
+def fetch_sepa_ts_meta(station_no: str) -> dict | None:
+    """15-min Precip series metadata (ts_id + from/to coverage) for one gauge."""
+    rows = _sepa(
+        "getTimeseriesList", station_no=station_no,
+        ts_name="15minute.Total", parametertype_name="Precip",
+        returnfields="station_no,station_name,ts_id,coverage",
+    )
+    return dict(zip(rows[0], rows[1])) if len(rows) > 1 else None
+
+
+def fetch_sepa_readings(ts_ids: list[str], period: str = "PT30H") -> list[dict]:
+    """15-min rainfall (mm) for many gauges in ONE call; metadata labels each series."""
+    return _sepa(
+        "getTimeseriesValues", ts_id=",".join(ts_ids), period=period,
+        returnfields="Timestamp,Value", metadata="true",
+        md_returnfields="station_no,station_name,ts_id,ts_unitsymbol",
     )
 
 

@@ -55,6 +55,9 @@ def main() -> None:
         )
         for s in stations if s.get("ea_gauge")
     })
+    sepa_ts_ids = [s["sepa_gauge"]["ts_id"] for s in stations if s.get("sepa_gauge")]
+    if sepa_ts_ids:  # all gauges in one KiWIS call
+        step("sepa_rain", lambda: fetchers.fetch_sepa_readings(sepa_ts_ids))
     step("metar", lambda: fetchers.fetch_metar(
         sorted({s["metar"]["icao"] for s in stations if s.get("metar")})
     ))

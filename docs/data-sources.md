@@ -85,7 +85,8 @@ variable**, rather than interpolating either side.
 | Source | What it's trusted for | Cadence | The catch |
 |---|---|---|---|
 | **Met Office land observations** (`land_obs`) | temperature, wind, humidity, visibility, pressure; rain *occurrence* via weather code | hourly | **no rain amounts** on the free tier; needs an API key (360 calls/day); some listed stations are duds |
-| **Environment Agency rain gauges** (`ea_rain`) | rain **amounts** (mm, tipping-bucket) | 15 min | **England only** (Scotland = SEPA, Wales = NRW — planned); gauges go dormant; occasional garbage readings (QC'd at normalisation) |
+| **Environment Agency rain gauges** (`ea_rain`) | rain **amounts** (mm, tipping-bucket) | 15 min | **England only**; gauges go dormant; occasional garbage readings (QC'd at normalisation) |
+| **SEPA rain gauges** (`sepa_rain`) | rain **amounts** (mm, tipping-bucket) — **Scotland's** equivalent of `ea_rain` | 15 min | Scotland only; same dormancy/QC caveats as EA (identical treatment at normalisation) |
 | **METAR airport reports** (`metar`) | temperature, wind — as an independent cross-check | ~30 min | integer °C only; no rain amounts (occurrence codes only); airports ≠ towns |
 | **ERA5 reanalysis** (`era5`) | *everything*, as interim truth for the 2024–26 backfill | hourly, ~5-day lag | it is itself a **model** product — see below |
 
@@ -112,12 +113,14 @@ healthy Met Office land-obs station (≥40 of 48 hourly entries reporting temper
 and pinned the location to the *station's* coordinates. Stations are never moved
 casually — continuity of the time series is the point.
 
-Each location is a **station triple**:
+Each location is a **station bundle**:
 
 1. the Met Office land-obs station (identified by a 6-character **geohash**, e.g.
    `gfnmmy` — this geohash is the station ID throughout the codebase),
 2. the nearest *live* EA rain gauge (England only),
-3. the nearest METAR airport within 40 km (where one exists).
+3. the nearest *live* SEPA rain gauge (Scotland only; added 2026-07-05 by
+   `scripts/add_sepa_gauges.py`, carrying the pre-resolved KiWIS `ts_id`),
+4. the nearest METAR airport within 40 km (where one exists).
 
 Current registry (`data/stations.json`, built 2026-07-04): **33 stations — 23 England,
 6 Scotland, 2 Wales, 2 Northern Ireland.** Interactive map:
@@ -125,10 +128,15 @@ Current registry (`data/stations.json`, built 2026-07-04): **33 stations — 23 
 
 Coverage is **not uniform**, and this shapes what can be verified where:
 
-- **Rain amounts**: only the 24 stations with an EA gauge — i.e. England (plus one Welsh
-  station near the border). All 6 Scottish, both NI and one Welsh station have **no
-  rain-amount truth yet**; hooking up SEPA (Scotland) and NRW (Wales) gauges is a planned
-  chunk. Until then, rain verification outside England leans on ERA5 and weather codes.
+- **Rain amounts**: 30 of 33 stations — 24 with an EA gauge (England plus one Welsh
+  station) and, since 2026-07-05, all **6 Scottish stations via SEPA gauges** (nearest
+  live gauge 0.2–14.1 km; Edinburgh's is Gogarbank, 200 m from the Met Office station).
+  Still without rain-amount truth: **both NI stations and Bangor (Wales)**. NI has no
+  free gauge API. Wales's is NRW's "River Level, Rainfall and Sea data" API — open data,
+  but it needs a free account at
+  [api-portal.naturalresources.wales](https://api-portal.naturalresources.wales) to get
+  a subscription key, so it is pending that sign-up. It would also fix a quiet wart:
+  Cardiff's "EA" gauge is 22.6 km away **across the Bristol Channel in Somerset**.
 - **METAR cross-check**: 25 of 33 stations have a paired airport; 8 don't.
 - **Temperature/wind**: all 33 stations (that's the health-check criterion).
 - Each station carries `country` (the four UK nations — the main regional segmentation
@@ -154,6 +162,7 @@ All free, all within ~10× headroom at current volumes
 | Open-Meteo (all endpoints) | 10k calls/day, non-commercial | ~20–40/day | CC-BY 4.0 attribution; AGPL self-host escape hatch |
 | Met Office Land Obs | **360 calls/day** (the binding constraint) | ~130/day (33 stations × 4 runs) | DataHub T&Cs: derived metrics publishable, raw feeds not redistributable |
 | EA flood-monitoring | fair use, keyless | ~130/day | Open Government Licence |
+| SEPA KiWIS time series | fair use, keyless | 4/day (all gauges per call) | Open Government Licence, attribute SEPA |
 | NOAA METAR | ≤100 req/min, keyless | 4/day | public domain |
 
 Conventions: identifying User-Agent everywhere (`wpq/config.py`), the Met Office key

@@ -16,21 +16,22 @@ forecasts.parquet
     member      ensemble member (0 = control), null for deterministic
 
 observations.parquet
-    source      'era5' | 'land_obs' | 'ea_rain' | 'metar'
+    source      'era5' | 'land_obs' | 'ea_rain' | 'sepa_rain' | 'metar'
     station_id, valid_time, variable, value as above
 
 Variable vocabulary and units — ALL unit conversion happens here:
     temp_c        deg C.  Open-Meteo/ERA5 native; land_obs native (0.01 C resolution);
                   METAR integer C.
     precip_mm     mm accumulated over the hour PRECEDING valid_time (Open-Meteo
-                  convention). EA 15-min readings are summed into that window; an hour
-                  needs all four 15-min slices to count. QC: negative readings clamped
-                  to 0, single readings > 20 mm/15min discarded as absurd.
+                  convention). EA and SEPA 15-min readings (both mm totals for the
+                  15 min ENDING at their timestamp) are summed into that window; an
+                  hour needs all four 15-min slices to count. QC: negative readings
+                  clamped to 0, single readings > 20 mm/15min discarded as absurd.
     wind_ms       m/s. Open-Meteo/ERA5 km/h / 3.6; METAR knots * 0.514444;
                   land_obs already m/s (verified empirically 2026-07-05 against
                   co-located METAR at 8 airports - values match kt->m/s conversion).
     gust_ms       m/s, same conversions as wind_ms.
-    rain_occurred 0/1. era5/ea_rain: hourly precip_mm >= 0.1. land_obs: Met Office
+    rain_occurred 0/1. era5/ea_rain/sepa_rain: hourly precip_mm >= 0.1. land_obs: Met Office
                   significant-weather code in the liquid-precip set {9..18, 28..30}
                   (rain/drizzle/sleet/thunder; hail+snow excluded). metar: wxString
                   contains RA or DZ - instantaneous at obs time, not an hourly
@@ -268,25 +269,12 @@ def load_land_obs(stations: list[dict]) -> pl.DataFrame:
                                keep="last", maintain_order=True)
 
 
-def load_ea_rain(stations: list[dict]) -> pl.DataFrame:
-    ref_to_sid = {s["ea_gauge"]["station_reference"]: s["id"]
-                  for s in stations if s.get("ea_gauge")}
-    readings: dict[tuple[str, datetime], float | None] = {}
-    for path in sorted((DATA_DIR / "raw" / "ea_rain").glob("*/*.json.gz")):
-        for ref, obj in read_gz(path).items():
-            sid = ref_to_sid.get(ref)
-            if sid is None or not obj:
-                continue
-            for item in obj.get("items", []):
-                v = item.get("value")
-                if v is None or not isinstance(v, (int, float)):
-                    continue
-                v = max(float(v), 0.0)  # tipping buckets report spurious negatives
-                if v > EA_MAX_MM_PER_15MIN:
-                    continue
-                t = datetime.fromisoformat(item["dateTime"].replace("Z", ""))
-                readings[(sid, t)] = v  # keep-last across overlapping fetches
-    # hour ending H covers readings at H-45, H-30, H-15, H+0; need all four slices
+def gauge_hours(source: str, readings: dict[tuple[str, datetime], float]) -> pl.DataFrame:
+    """QC'd 15-min gauge readings -> hourly precip_mm + rain_occurred rows.
+
+    Hour ending H covers readings at H-45, H-30, H-15, H+0; needs all four slices.
+    Shared by EA (England) and SEPA (Scotland) — same tipping-bucket semantics.
+    """
     hours: dict[tuple[str, datetime], list[float]] = {}
     for (sid, t), v in readings.items():
         bucket = (t.replace(minute=0) + timedelta(hours=1)) if t.minute else t
@@ -296,11 +284,55 @@ def load_ea_rain(stations: list[dict]) -> pl.DataFrame:
         if len(vals) != 4:
             continue
         mm = sum(vals)
-        rows.add(source="ea_rain", station_id=sid, valid_time=hour,
+        rows.add(source=source, station_id=sid, valid_time=hour,
                  variable="precip_mm", value=mm)
-        rows.add(source="ea_rain", station_id=sid, valid_time=hour,
+        rows.add(source=source, station_id=sid, valid_time=hour,
                  variable="rain_occurred", value=float(mm >= RAIN_THRESHOLD_MM))
     return rows.frame()
+
+
+def qc_15min(v) -> float | None:
+    """Tipping-bucket QC: non-numeric/None dropped, negatives clamped, >20mm absurd."""
+    if v is None or not isinstance(v, (int, float)):
+        return None
+    v = max(float(v), 0.0)  # tipping buckets report spurious negatives
+    return None if v > EA_MAX_MM_PER_15MIN else v
+
+
+def load_ea_rain(stations: list[dict]) -> pl.DataFrame:
+    ref_to_sid = {s["ea_gauge"]["station_reference"]: s["id"]
+                  for s in stations if s.get("ea_gauge")}
+    readings: dict[tuple[str, datetime], float] = {}
+    for path in sorted((DATA_DIR / "raw" / "ea_rain").glob("*/*.json.gz")):
+        for ref, obj in read_gz(path).items():
+            sid = ref_to_sid.get(ref)
+            if sid is None or not obj:
+                continue
+            for item in obj.get("items", []):
+                v = qc_15min(item.get("value"))
+                if v is None:
+                    continue
+                t = datetime.fromisoformat(item["dateTime"].replace("Z", ""))
+                readings[(sid, t)] = v  # keep-last across overlapping fetches
+    return gauge_hours("ea_rain", readings)
+
+
+def load_sepa_rain(stations: list[dict]) -> pl.DataFrame:
+    ts_to_sid = {str(s["sepa_gauge"]["ts_id"]): s["id"]
+                 for s in stations if s.get("sepa_gauge")}
+    readings: dict[tuple[str, datetime], float] = {}
+    for path in sorted((DATA_DIR / "raw" / "sepa_rain").glob("*/*.json.gz")):
+        for series in read_gz(path):  # one entry per ts_id (metadata=true)
+            sid = ts_to_sid.get(str(series.get("ts_id")))
+            if sid is None:
+                continue
+            for ts, v in series.get("data", []):
+                v = qc_15min(v)
+                if v is None:
+                    continue
+                t = datetime.fromisoformat(ts.replace("Z", "+00:00")).replace(tzinfo=None)
+                readings[(sid, t)] = v  # keep-last across overlapping fetches
+    return gauge_hours("sepa_rain", readings)
 
 
 def load_metar(stations: list[dict]) -> pl.DataFrame:
@@ -357,6 +389,7 @@ def main() -> None:
         load_era5(stations),
         load_land_obs(stations),
         load_ea_rain(stations),
+        load_sepa_rain(stations),
         load_metar(stations),
     ]).sort(["source", "station_id", "variable", "valid_time"])
     observations.write_parquet(NORM_DIR / "observations.parquet", compression="zstd")

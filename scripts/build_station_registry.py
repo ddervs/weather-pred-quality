@@ -4,7 +4,9 @@ For ~35 seed cities across UK regions:
   1. find the nearest Met Office land-obs station (geohash) and health-check it
      (>=40 of 48 hourly entries must carry a temperature),
   2. pair it with the nearest *live* EA rain gauge (England only; readings in last 24h),
-  3. pair it with the nearest METAR airport within 40 km.
+  3. pair Scottish stations with the nearest *live* SEPA rain gauge (15-min Precip
+     series with data in the last 24h — dormant gauges are skipped),
+  4. pair it with the nearest METAR airport within 40 km.
 
 Stations failing the health check are dropped. Locations are the *station* positions
 (decoded geohash centres), not the city centres. Run once; re-run only deliberately —
@@ -28,6 +30,8 @@ from wpq.fetchers import (
     fetch_land_obs,
     fetch_metar,
     fetch_nearest_land_station,
+    fetch_sepa_precip_stations,
+    fetch_sepa_ts_meta,
 )
 from wpq.geo import geohash_decode, haversine_km
 
@@ -98,6 +102,34 @@ def pick_live_gauge(lat: float, lon: float) -> dict | None:
     return None
 
 
+def pick_sepa_gauge(lat: float, lon: float, gauges: list[dict]) -> dict | None:
+    """Nearest SEPA gauge whose 15-min Precip series reported in the last 24h.
+
+    `gauges` is fetch_sepa_precip_stations() output (fetched once, ~380 rows).
+    ts_id is resolved here so the collector needs one batched values call, no lookups.
+    """
+    with_pos = [g for g in gauges if g.get("station_latitude") and g.get("station_longitude")]
+    with_pos.sort(key=lambda g: haversine_km(
+        lat, lon, float(g["station_latitude"]), float(g["station_longitude"])))
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    for g in with_pos[:4]:
+        meta = fetch_sepa_ts_meta(g["station_no"])
+        time.sleep(0.2)
+        if not meta or not meta.get("to"):
+            continue
+        if datetime.fromisoformat(meta["to"].replace("Z", "+00:00")) > cutoff:
+            glat, glon = float(g["station_latitude"]), float(g["station_longitude"])
+            return {
+                "station_no": g["station_no"],
+                "name": g["station_name"],
+                "ts_id": meta["ts_id"],
+                "lat": round(glat, 6),
+                "lon": round(glon, 6),
+                "distance_km": round(haversine_km(lat, lon, glat, glon), 1),
+            }
+    return None
+
+
 def main() -> None:
     # 1. Discover + dedupe Met Office stations
     stations: dict[str, dict] = {}
@@ -132,10 +164,15 @@ def main() -> None:
             print(f"  DROP {station['seed_city']} ({gh}): only {n_temp}/48 temperature entries")
     print(f"{len(healthy)} stations pass health check")
 
-    # 3. Pair EA gauge + METAR
+    # 3. Pair EA gauge (England) + SEPA gauge (Scotland) + METAR
     live_metars = {m.get("icaoId") for m in fetch_metar([a[0] for a in METAR_AIRPORTS], hours=3)}
+    sepa_gauges = fetch_sepa_precip_stations()
     for gh, station in healthy.items():
         station["ea_gauge"] = pick_live_gauge(station["lat"], station["lon"])
+        station["sepa_gauge"] = (
+            pick_sepa_gauge(station["lat"], station["lon"], sepa_gauges)
+            if station.get("country") == "Scotland" else None
+        )
         icao, dist = min(
             ((a, haversine_km(station["lat"], station["lon"], alat, alon))
              for a, alat, alon in METAR_AIRPORTS),
@@ -145,7 +182,9 @@ def main() -> None:
             {"icao": icao, "distance_km": round(dist, 1)} if dist <= 40 and icao in live_metars else None
         )
         gauge = station["ea_gauge"]
+        sepa = station["sepa_gauge"]
         print(f"  {station['seed_city']:<14} gauge={'%s @%skm' % (gauge['station_reference'], gauge['distance_km']) if gauge else '-':<22} "
+              f"sepa={'%s @%skm' % (sepa['name'], sepa['distance_km']) if sepa else '-':<28} "
               f"metar={station['metar']['icao'] if station['metar'] else '-'}")
 
     STATIONS_FILE.parent.mkdir(exist_ok=True)
