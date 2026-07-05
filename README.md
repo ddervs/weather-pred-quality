@@ -28,16 +28,22 @@ hover for station details). Regenerate after registry changes with
   tidy Parquet (`data/norm/`) → verification metrics (`data/metrics/metrics.parquet`):
   MAE/bias/RMSE, Brier, POD/FAR/CSI/ETS vs persistence + climatology baselines, rebuilt
   weekly by [CI](.github/workflows/metrics.yml). First findings:
-  [`docs/07-first-real-metrics.md`](docs/07-first-real-metrics.md) — e.g. UKMO 10 m wind
-  loses to day-of-year climatology beyond day 3
+  [`docs/results/2026-07-05-first-real-metrics.md`](docs/results/2026-07-05-first-real-metrics.md)
+  — e.g. UKMO 10 m wind loses to day-of-year climatology beyond day 3
 - [`wpq/calibration.py`](wpq/calibration.py) — split-conformal temperature intervals
   (90 % coverage held out-of-sample: ±1.5 °C day 0 → ±3.6 °C day 5), rain Brier
   decomposition (binary rain calls have *negative* skill vs climatology beyond day 1),
-  block-bootstrap CIs: [`docs/08-calibration.md`](docs/08-calibration.md)
+  block-bootstrap CIs: [`docs/results/2026-07-05-calibration.md`](docs/results/2026-07-05-calibration.md)
 
-Research docs are in [`docs/`](docs/):
-start with [`docs/00-overview.md`](docs/00-overview.md) (TL;DR + decisions needed),
-then data sources, prior art, metrics/calibration, architecture options, and costs.
+Documentation lives in [`docs/`](docs/README.md): start with
+[`docs/overview.md`](docs/overview.md) (what this is and how the pipeline fits together),
+then [data sources & ground truth](docs/data-sources.md),
+[what's cached on disk and what every field means](docs/data-layout.md),
+[how forecasts are scored](docs/methodology.md), and a
+[glossary of every acronym](docs/glossary.md) (ERA5, UKMO, MOGREPS, ETS…).
+Dated findings are in [`docs/results/`](docs/results/README.md); the research phase —
+including every avenue considered but not (yet) pursued — is preserved in
+[`docs/research/`](docs/research/README.md).
 
 [`probes/`](probes/) contains small runnable scripts that verified the key APIs
 (Open-Meteo multi-model / previous-runs / ensembles, met.no, NOAA METAR) with sample

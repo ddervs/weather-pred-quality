@@ -1,5 +1,9 @@
 # Prior art: who already does this, and what we can reuse
 
+> **Archive.** Research-phase snapshot, kept verbatim. Note: the `scores`/MAPIE reuse
+> verdicts below were later reversed — metrics are hand-rolled in polars
+> (see [`docs/methodology.md`](../methodology.md)).
+
 Research date: 2026-07-03. Bottom line: **nothing open-source does "UK multi-source live
 forecast verification with calibrated probabilities"** — the niche is genuinely open — but
 several components are reusable wholesale, and two projects prove the concept.

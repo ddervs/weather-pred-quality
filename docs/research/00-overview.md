@@ -1,5 +1,8 @@
 # UK forecast verification — research summary & options (2026-07-03)
 
+> **Archive.** Research-phase snapshot, kept verbatim (including roads not taken).
+> For the current system see [`docs/`](../README.md).
+
 **North star**: a UK map serving calibrated probabilistic weather forecasts blended from
 multiple sources, with reliability guaranteed by conformal-style methods.
 **Tonight's question**: which data sources, how to cache and evaluate forecasts against
@@ -88,4 +91,4 @@ reality, what exists already, what it costs.
 - [03 — Metrics & calibration](03-metrics-and-calibration.md): CRPS/Brier/ETS, verified calibration, conformal, reliability-score options
 - [04 — Architecture options](04-architecture-options.md): collector, storage, backfill, dashboard
 - [05 — Costs](05-costs.md): the £0 path and where money goes later
-- [`probes/`](../probes/README.md): runnable API probes + committed sample payloads
+- [`probes/`](../../probes/README.md): runnable API probes + committed sample payloads

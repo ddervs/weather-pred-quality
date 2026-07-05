@@ -1,5 +1,9 @@
 # Metrics, calibration, and the reliability score
 
+> **Archive.** Research-phase survey, kept verbatim (including options not implemented:
+> CRPS, Elo, the library choices). What is actually computed today:
+> [`docs/methodology.md`](../methodology.md).
+
 How we'd actually score forecasts, in three layers: classic verification, probabilistic
 verification, and calibration/conformal (the differentiator). Then options for a single
 "reliability score". Everything here has a maintained Python implementation — no metric

@@ -9,13 +9,21 @@ reality (`git log`, `ls data/`), then start the **Next chunk**.
 Verify UK weather forecasts against observations; publish reliability scores segmented by
 region / lead time / variable. v1 scope: **UKMO model forecasts only** (via Open-Meteo),
 ground truth = Met Office land obs + EA rain gauges + METAR. Strictly £0. No BBC. North
-star (docs/00-overview.md): calibrated probabilistic UK map, conformal guarantees.
-Research: docs/00..05. Repo is private for now; **eventual dashboard hosting = public
+star (docs/research/00-overview.md): calibrated probabilistic UK map, conformal guarantees.
+Living guide docs: docs/README.md (overview / data-sources / data-layout / methodology /
+glossary); research archive: docs/research/; dated findings: docs/results/.
+Repo is private for now; **eventual dashboard hosting = public
 GitHub Pages on Danial's personal site, like github.com/ddervs/restaurant-review-map —
 but only after everything works privately** (his explicit preference, 2026-07-04).
 
 ## Current state (as of 2026-07-05, second chunk)
 
+- **Docs reorganised** (2026-07-05, side task): living guide docs
+  (docs/{overview,data-sources,data-layout,methodology,glossary}.md + docs/README.md
+  index), dated findings moved to docs/results/, research phase preserved verbatim in
+  docs/research/ (old 00–05). The "data format gotchas" list now lives in
+  docs/data-layout.md — keep it updated there, not here. New data-shape surprises:
+  record in data-layout.md; new source decisions: data-sources.md.
 - **Calibration layer DONE** (same day, second chunk):
   - `wpq/calibration.py` + `scripts/run_calibration.py` →
     `data/metrics/{conformal,brier_decomposition,bootstrap_ci}.parquet`; wired
@@ -28,7 +36,8 @@ but only after everything works privately** (his explicit preference, 2026-07-04
     balloons) — the killer argument for MOGREPS PoP; same code will draw real
     reliability curves once ~4 wks of ensembles exist (~2026-08-01).
   - Station-day block bootstrap (B=1000): headline CIs ±0.005–0.015 — all
-    lead-to-lead differences significant. Findings + caveats in docs/08.
+    lead-to-lead differences significant. Findings + caveats in
+    docs/results/2026-07-05-calibration.md.
   - All of it is vs ERA5 truth; redo vs live obs once months accumulate.
 
 ## Earlier state (2026-07-05, first chunk)
@@ -44,7 +53,7 @@ but only after everything works privately** (his explicit preference, 2026-07-04
     `persistence`, `climatology_dayofyear` (in-sample, crude — flagged).
     `scores` lib skipped (xarray bloat); metrics hand-rolled in polars.
   - `scripts/report_metrics.py` prints headline tables; findings in
-    docs/07-first-real-metrics.md. Acceptance PASSED: temp MAE by lead vs ERA5 =
+    docs/results/2026-07-05-first-real-metrics.md. Acceptance PASSED: temp MAE by lead vs ERA5 =
     0.70/0.84/1.03/1.15/1.36/1.63 °C — identical to the smoke test.
     Notable finding: UKMO 10 m wind loses to day-of-year climatology at leads 4–5.
   - `.github/workflows/metrics.yml`: weekly (Sun 03:40 UTC) + manual; rebuilds
@@ -72,35 +81,18 @@ but only after everything works privately** (his explicit preference, 2026-07-04
 - Backfill DONE (`scripts/backfill_ukmo.py`): `data/backfill/prev_runs/` (UKMO leads
   0–5 d, 2024-01-01..2026-06-30, 30 files) + `data/backfill/era5/` (truth, 15 files),
   chunked `{start}_{end}_c{ci}.json.gz`, 13.8 MB total. Smoke test PASSED — pipeline
-  verified, results + gotchas in docs/06-smoke-test.md (temp MAE 0.70→1.63 °C over
+  verified, results + gotchas in docs/results/2026-07-04-smoke-test.md (temp MAE 0.70→1.63 °C over
   leads 0→5). Keep "error grows with lead" as a permanent regression check.
 - Station map: `docs/station-map.html/.png`, regenerate via
   `uv run scripts/make_station_map.py --screenshot` when the registry changes.
 
 ## Data format gotchas (cost real time to learn — trust these)
 
-- **Open-Meteo multi-location responses are ordered lists matching request order**,
-  which is `stations.json` order (or chunks of it: backfill uses `CHUNK_SIZE = 11`,
-  chunk `ci` = `stations[ci*11:(ci+1)*11]`). No station id in the response — join by position.
-- Open-Meteo previous-runs: `var_previous_dayN` = value predicted ~N×24 h before valid
-  time. Only deterministic runs; lead granularity is daily. **Lead 0 comes back under the
-  plain variable name** (`temperature_2m`), not `_previous_day0` (that key is absent).
-- Live `ukmo_forecast` files: init/issue time is NOT in the payload; approximate lead as
-  `valid_time − fetch_time` (fetch time = filename). Good enough at 6 h cadence; note it.
-- `land_obs` files: `{geohash: [48 hourly entries] | null}`; entries have `datetime`,
-  `temperature` (0.01 °C), `humidity`, `wind_speed`/`wind_gust` (units TBC — check! knots
-  vs m/s vs mph not yet verified), `wind_direction` (compass str), `visibility` (m),
-  `mslp`, `pressure_tendency`, `weather_code` (int; rain occurrence from code table).
-  **No rain amounts.** Dud stations return timestamp-only entries.
-- `ea_rain` files: `{station_reference: {items: [{dateTime, value(mm/15min), …}]}}`;
-  gauges can go dormant; values occasionally negative/absurd (QC needed: clamp `<0`,
-  flag `>20 mm/15min`).
-- `metar` files: list of obs; `temp` integer °C, `wspd` knots, no rain amounts,
-  `wxString` codes; 2 obs/h.
+**Moved to docs/data-layout.md** (2026-07-05 docs reorg) — the full list of payload
+shapes, unit conventions and API quirks lives there now; record new surprises there.
+One item that stays here because it's an API-call constraint, not a data-shape fact:
+
 - Met Office `nearest` endpoint needs ≤2 dp coords; obs API is per-station geohash.
-- Previous-runs leads ≥1 d return nulls for 25–45 % of hours (lead 0 is complete), and
-  the missing subset differs per lead — cross-lead metric comparisons carry a
-  sample-composition caveat (see docs/07). Not a bug; the API just has holes.
 
 ## NEXT CHUNK: dashboard v1 (private)
 
@@ -131,7 +123,7 @@ artifact); public Pages + personal site only when Danial says so.
    spans ~4 weeks): member-fraction PoP per lead, multi-bin reliability via the
    existing Brier-decomposition code, add to metrics + dashboard. Also redo the
    headline tables vs live obs truth (land_obs/EA/METAR) as the ERA5 credibility
-   check — docs/08 caveat.
+   check — docs/results/2026-07-05-calibration.md caveat.
 2. **SEPA/NRW gauges** for Scotland/Wales rain truth; re-pair those stations.
 3. **v1.5 data**: Met Office DataHub site-specific product into collector ("model vs
    app product"); widen Open-Meteo model list (ECMWF/ICON/GFS…) — schema already copes.
@@ -145,4 +137,5 @@ artifact); public Pages + personal site only when Danial says so.
 - Zero cost, ToS-polite, `.env` never committed, key never printed/logged.
 - Always `git pull --rebase` before pushing (the collector bot commits to main).
 - Commit messages end with the Claude Co-Authored-By line.
-- Data decisions that surprised us get recorded in this file or docs/01.
+- Data decisions that surprised us get recorded in docs/data-layout.md (payload/unit
+  surprises), docs/data-sources.md (source decisions), or this file (plan-level).

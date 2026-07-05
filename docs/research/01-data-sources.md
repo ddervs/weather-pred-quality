@@ -1,5 +1,8 @@
 # Data sources for UK forecast verification
 
+> **Archive.** Research-phase snapshot, kept verbatim (including sources not adopted).
+> The sources actually in use are described in [`docs/data-sources.md`](../data-sources.md).
+
 Research date: 2026-07-03. All limits/prices checked against provider pages on this date.
 
 Two distinct things we might verify, and they need different sources:

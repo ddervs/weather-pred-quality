@@ -1,5 +1,7 @@
 # Costs: the £0 path and where money would eventually go
 
+> **Archive.** Research-phase snapshot, kept verbatim. The £0 constraint still holds.
+
 Prices checked 2026-07-03; Met Office from datahub.metoffice.gov.uk pricing pages, ex-VAT.
 
 ## The £0 path (covers everything in phase 1–2)

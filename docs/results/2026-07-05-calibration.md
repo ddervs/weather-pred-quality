@@ -1,4 +1,4 @@
-# 08 — Calibration layer: conformal intervals, Brier decomposition, bootstrap CIs
+# Calibration layer: conformal intervals, Brier decomposition, bootstrap CIs
 
 *2026-07-05. Produced by `wpq/calibration.py` (via `scripts/run_calibration.py`) →
 `data/metrics/{conformal,brier_decomposition,bootstrap_ci}.parquet`. Sample: UKMO
@@ -29,7 +29,9 @@ calibrated on **2024 only**, scored on **2025-01 → 2026-06** (clean temporal s
   the day-5 forecast only to ±3.6 °C" — same information as MAE but stated as a
   guarantee rather than an average.
 - Scotland needs the widest short-lead intervals (±1.8 vs ±1.4–1.5 °C at day 0),
-  consistent with the MAE story in docs/07; nations converge by day 2.
+  consistent with the MAE story in
+  [2026-07-05-first-real-metrics.md](2026-07-05-first-real-metrics.md); nations
+  converge by day 2.
 - Half-widths quantise to 0.1 °C because Open-Meteo serves 0.1 °C-resolution temps.
 
 ## Rain: the binary forecast is *worse than climatology* beyond day 1 (Brier)
@@ -49,7 +51,7 @@ Murphy decomposition, `brier = reliability − resolution + uncertainty`
 Headline finding: **as a probability statement, a hard yes/no rain forecast is worse
 than just quoting the climatological base rate (~23 %) from day 2 out** — resolution
 collapses (0.050 → 0.010) while the reliability penalty of overconfident 0/1 claims
-balloons (0.025 → 0.095). The ETS story in docs/07 showed the forecast still has
+balloons (0.025 → 0.095). The ETS story in the first-real-metrics doc showed the forecast still has
 *discrimination* skill at day 5 (ETS 0.13 > 0); the Brier story shows that skill is
 destroyed by packaging it as certainty. This is the strongest possible motivation for
 MOGREPS member-fraction PoP (unlocks ~2026-08-01) — same decomposition code will then
@@ -64,9 +66,9 @@ temp MAE (°C): 0.701 [0.697, 0.705] → 1.631 [1.616, 1.645] across leads 0→5
 rain ETS: 0.343 [0.339, 0.346] → 0.133 [0.128, 0.137].
 
 CIs are ±0.005–0.015 — with ~700 k pairs per lead every headline difference in
-docs/07 is comfortably significant. The odd non-monotone step (ETS lead 1 → 2:
+the first-real-metrics doc is comfortably significant. The odd non-monotone step (ETS lead 1 → 2:
 0.272 → 0.284) is also significant, confirming it as the sample-composition artefact
-of previous-runs null patterns (docs/07 caveat), not noise.
+of previous-runs null patterns (first-real-metrics caveat), not noise.
 
 ## Caveats
 

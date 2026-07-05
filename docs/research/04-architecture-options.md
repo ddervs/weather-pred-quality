@@ -1,5 +1,9 @@
 # Architecture options: collect → store → evaluate → show
 
+> **Archive.** Research-phase snapshot, kept verbatim. Option A (GitHub Actions
+> git-scraping) was adopted; the implemented pipeline is described in
+> [`docs/overview.md`](../overview.md) and [`docs/data-layout.md`](../data-layout.md).
+
 Constraint set: £0 budget, free-tier cloud cron preferred, ~50 UK station-located points,
 data volumes from probes (~5 MB/day raw JSON total, ~1 MB/day gzipped).
 

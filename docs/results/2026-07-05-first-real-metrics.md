@@ -1,4 +1,4 @@
-# 07 — First real metrics (normalisation layer + metrics engine)
+# First real metrics (normalisation layer + metrics engine)
 
 *2026-07-05. Produced by the new pipeline: `wpq/normalize.py` → `data/norm/*.parquet`,
 `wpq/metrics.py` (via `scripts/run_metrics.py`) → `data/metrics/metrics.parquet`,
@@ -8,7 +8,8 @@ UKMO `ukmo_seamless` backfill vs ERA5 truth, plus 1 day of live collection.*
 ## Acceptance check — pipeline reproduces the smoke test
 
 Temperature MAE vs ERA5 by lead: **0.70, 0.84, 1.03, 1.15, 1.36, 1.63 °C** for leads
-0–5 d — identical to the dependency-free smoke test (docs/06). The Parquet path, unit
+0–5 d — identical to the dependency-free smoke test
+([2026-07-04-smoke-test.md](2026-07-04-smoke-test.md)). The Parquet path, unit
 conversions and joins introduce no drift. "Error grows with lead" holds everywhere and
 stays the permanent regression check.
 

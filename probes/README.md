@@ -20,4 +20,6 @@ Key sizing takeaway: a 50-location × 7-model × 4-fetches/day collector produce
 **4 MB/day of raw JSON (~650 KB gzipped)** from Open-Meteo plus ~1 MB/day from met.no —
 about **1.5 GB/year raw, ~250 MB/year gzipped**. Well within free tiers of everything.
 
-Findings are written up properly in [`../docs/`](../docs/).
+Findings are written up properly in the research archive
+([`../docs/research/`](../docs/research/README.md)); the sources that made the cut are
+described in [`../docs/data-sources.md`](../docs/data-sources.md).
