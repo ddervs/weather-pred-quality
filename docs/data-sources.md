@@ -87,7 +87,7 @@ variable**, rather than interpolating either side.
 | Source | What it's trusted for | Cadence | The catch |
 |---|---|---|---|
 | **Met Office land observations** (`land_obs`) | temperature, wind, humidity, visibility, pressure; rain *occurrence* via weather code | hourly | **no rain amounts** on the free tier; needs an API key (360 calls/day); some listed stations are duds |
-| **Environment Agency rain gauges** (`ea_rain`) | rain **amounts** (mm, tipping-bucket) | 15 min | **England only**; gauges go dormant; occasional garbage readings (QC'd at normalisation) |
+| **Environment Agency rain gauges** (`ea_rain`) | rain **amounts** (mm, tipping-bucket) | 15 min (2 gauges hourly-only) | **England only**; gauges go dormant; occasional garbage readings (QC'd at normalisation); gauges publish 1–3 rainfall series and the obvious one is often dead — each gauge's **live series is pinned** in `stations.json` (`ea_gauge.measure`, 2026-07-06; details in data-layout.md) |
 | **SEPA rain gauges** (`sepa_rain`) | rain **amounts** (mm, tipping-bucket) — **Scotland's** equivalent of `ea_rain` | 15 min | Scotland only; same dormancy/QC caveats as EA (identical treatment at normalisation) |
 | **NRW rain gauges** (`nrw_rain`) | rain **amounts** (mm, tipping-bucket) — **Wales's** equivalent | 15 min | Wales only; needs the free `NRW_API_KEY`; station "Online" status lies — liveness comes from `latestTime` |
 | **METAR airport reports** (`metar`) | temperature, wind — as an independent cross-check | ~30 min | integer °C only; no rain amounts (occurrence codes only); airports ≠ towns |

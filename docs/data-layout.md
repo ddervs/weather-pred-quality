@@ -167,7 +167,7 @@ conversion happens there and only there**. Full rebuild each run (idempotent):
 | variable | unit | conversions & conventions |
 |---|---|---|
 | `temp_c` | °C | Open-Meteo/ERA5 native; land_obs ÷ 100 (0.01 °C resolution); METAR integer °C |
-| `precip_mm` | mm accumulated over the hour **preceding** `valid_time` (Open-Meteo convention) | EA/SEPA/NRW 15-min readings (all mm totals for the 15 min ending at their timestamp) summed into that window — an hour needs all four slices to count. QC: negatives clamped to 0, single readings > 20 mm/15 min discarded |
+| `precip_mm` | mm accumulated over the hour **preceding** `valid_time` (Open-Meteo convention) | EA/SEPA/NRW 15-min readings (all mm totals for the 15 min ending at their timestamp) summed into that window — an hour needs all four slices to count; the two hourly-only EA gauges (`ea_gauge.period` 3600) contribute their single reading as the hour. QC: negatives clamped to 0, single readings > 20 mm/15 min (80 mm/h hourly) discarded |
 | `wind_ms` | m/s | Open-Meteo/ERA5 km/h ÷ 3.6; METAR knots × 0.514444; land_obs already m/s |
 | `gust_ms` | m/s | same conversions as `wind_ms` |
 | `rain_occurred` | 0/1 — "did it rain this hour?" | era5 and the rain gauges (ea/sepa/nrw): hourly `precip_mm ≥ 0.1`. land_obs: Met Office significant-weather code in the liquid-precip set {9–18, 28–30} (rain/drizzle/sleet/thunder; hail and snow excluded). metar: `wxString` contains `RA` or `DZ` — instantaneous at obs time, read as "raining around the top of the hour" |

@@ -42,8 +42,10 @@ Every acronym and term of art used in this repo, in plain English. Grouped by th
   temperature, wind, humidity, visibility, pressure, weather code. No rain amounts on
   the free tier.
 - **EA** — Environment Agency (England). Its flood-monitoring API exposes ~thousands of
-  tipping-bucket rain gauges: 15-minute rainfall amounts in mm. Our rain-amount truth
-  for England.
+  tipping-bucket rain gauges: 15-minute rainfall amounts in mm (two of ours are
+  hourly-only, and gauges often publish several rainfall series with the obvious one
+  dead — the live series per gauge is pinned in `stations.json`, 2026-07-06). Our
+  rain-amount truth for England.
 - **SEPA** — Scottish Environment Protection Agency: the Scottish equivalent of the EA.
   ~380 rain gauges, 15-minute mm totals, keyless, via a **KiWIS** API (the query
   protocol of KISTERS' water-data platform, used by many hydrology agencies) at
@@ -148,5 +150,13 @@ Every acronym and term of art used in this repo, in plain English. Grouped by th
   stored in. **polars** — the dataframe library doing the processing. **DuckDB** — SQL
   engine that queries Parquet directly (currently unused; candidate for removal).
 - **uv** — the Python package/environment manager (`uv sync`, `uv run …`).
-- **GitHub Actions** — CI service running the collector (every 6 h) and the weekly
-  metrics rebuild; "git-scraping" = committing fetched data straight into the repo.
+- **GitHub Actions** — CI service running the collector (every 6 h), the weekly
+  metrics rebuild and the Monday health report; "git-scraping" = committing fetched
+  data straight into the repo. Cron times are aspirational — runs arrive 2–5 h late,
+  so nothing may gate on wall-clock hour (that bug silently killed ensemble
+  collection until 2026-07-06).
+- **weekly report** — Monday-morning red-amber-green health email: source liveness,
+  station coverage and model-metric drift, posted as an instantly-closed `@`-mention
+  issue (label `weekly-report`) so GitHub emails it natively — no SMTP credential.
+  A `source-alert` issue fires mid-week if any source has been dead 24 h+ (max one
+  per source per week). RAG thresholds live in `scripts/make_weekly_report.py`.

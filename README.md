@@ -34,6 +34,11 @@ hover for station details). Regenerate after registry changes with
   (90 % coverage held out-of-sample: ±1.5 °C day 0 → ±3.6 °C day 5), rain Brier
   decomposition (binary rain calls have *negative* skill vs climatology beyond day 1),
   block-bootstrap CIs: [`docs/results/2026-07-05-calibration.md`](docs/results/2026-07-05-calibration.md)
+- [`scripts/make_weekly_report.py`](scripts/make_weekly_report.py) — Monday-morning
+  red-amber-green health email (source liveness, station coverage, model-metric drift)
+  via [weekly-report.yml](.github/workflows/weekly-report.yml), delivered as an
+  instantly-closed `@`-mention issue; plus mid-week
+  [`source-alert` issues](scripts/check_source_alerts.py) when a source is dead 24 h+
 
 Documentation lives in [`docs/`](docs/README.md): start with
 [`docs/overview.md`](docs/overview.md) (what this is and how the pipeline fits together),
