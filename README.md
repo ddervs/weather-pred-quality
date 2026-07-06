@@ -39,6 +39,12 @@ hover for station details). Regenerate after registry changes with
   via [weekly-report.yml](.github/workflows/weekly-report.yml), delivered as an
   instantly-closed `@`-mention issue; plus mid-week
   [`source-alert` issues](scripts/check_source_alerts.py) when a source is dead 24 h+
+- [`scripts/make_dashboard.py`](scripts/make_dashboard.py) — interactive dashboard
+  ([`docs/dashboard.html`](docs/dashboard.html), self-contained, open locally):
+  selectable station map + nation/station scoping, lead curves vs baselines,
+  conformal intervals, Brier skill, per-station scorecards; regenerated weekly by CI
+
+[![Verification dashboard](docs/dashboard.png)](docs/dashboard.html)
 
 Documentation lives in [`docs/`](docs/README.md): start with
 [`docs/overview.md`](docs/overview.md) (what this is and how the pipeline fits together),

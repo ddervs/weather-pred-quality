@@ -1,0 +1,550 @@
+<title>UK forecast verification — dashboard</title>
+<style>
+  .wpq {
+    --surface: #fcfcfb; --page: #f9f9f7; --ink: #0b0b0b; --ink-2: #52514e;
+    --muted: #898781; --hairline: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,.10);
+    --land: #efeee7; --land-line: #d8d7cd; --sea: #fcfcfb;
+    --s1: #2a78d6; --s2: #1baf7a; --s3: #eda100; --neg: #e34948;
+    --q1: #b7d3f6; --q2: #86b6ef; --q3: #5598e7; --q4: #256abf; --q5: #104281;
+    color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page); min-height: 100vh; padding: 28px 20px 48px;
+    position: relative;
+  }
+  @media (prefers-color-scheme: dark) {
+    .wpq {
+      --surface: #1a1a19; --page: #0d0d0d; --ink: #fff; --ink-2: #c3c2b7;
+      --muted: #898781; --hairline: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.10);
+      --land: #232320; --land-line: #383835; --sea: #1a1a19;
+      --s1: #3987e5; --s2: #199e70; --s3: #c98500; --neg: #e66767;
+      --q1: #104281; --q2: #256abf; --q3: #5598e7; --q4: #86b6ef; --q5: #cde2fb;
+    }
+  }
+  .wpq * { box-sizing: border-box; }
+  .wpq .wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  .wpq header h1 { font-size: 22px; font-weight: 650; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+  .wpq header p { margin: 6px 0 0; color: var(--ink-2); max-width: 74ch; }
+  .wpq .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+
+  .wpq .chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .wpq .chip { border: 1px solid var(--border); background: var(--surface); color: var(--ink-2);
+    border-radius: 999px; padding: 5px 14px; font: inherit; font-size: 13.5px; cursor: pointer; }
+  .wpq .chip:hover { color: var(--ink); }
+  .wpq .chip.on { background: var(--ink); color: var(--surface); border-color: var(--ink); font-weight: 600; }
+  .wpq .chip .x { margin-left: 7px; opacity: .7; }
+  .wpq .chips .lbl { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-right: 2px; }
+
+  .wpq .grid-a { display: grid; grid-template-columns: minmax(0,5fr) minmax(0,7fr); gap: 18px; align-items: start; }
+  .wpq .grid-b { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; align-items: start; }
+  @media (max-width: 900px) { .wpq .grid-a, .wpq .grid-b { grid-template-columns: 1fr; } }
+  .wpq .col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+  .wpq .chart-card { padding: 14px 16px 10px; }
+  .wpq .chart-card h2 { font-size: 14.5px; font-weight: 650; margin: 0; }
+  .wpq .chart-card .sub { color: var(--muted); font-size: 12.5px; margin: 2px 0 4px; }
+  .wpq .leg-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 6px 0 2px; font-size: 12.5px; color: var(--ink-2); }
+  .wpq .leg-row .k { display: inline-flex; align-items: center; gap: 6px; }
+  .wpq .kdot { width: 9px; height: 9px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.10); }
+  .wpq .kline { width: 14px; height: 0; border-top: 2.5px solid; border-radius: 2px; }
+  .wpq svg.chart { display: block; width: 100%; height: auto; }
+  .wpq .gl { stroke: var(--hairline); stroke-width: 1; }
+  .wpq .ax { stroke: var(--axis); stroke-width: 1; }
+  .wpq .tick { fill: var(--muted); font-size: 10.5px; }
+  .wpq .endlbl { fill: var(--ink-2); font-size: 11px; font-weight: 600; }
+  .wpq .caplbl { fill: var(--ink-2); font-size: 10.5px; font-weight: 600; text-anchor: middle; }
+  .wpq .xh { stroke: var(--axis); stroke-width: 1; opacity: 0; }
+  .wpq details.twin { margin-top: 4px; }
+  .wpq details.twin summary { font-size: 12px; color: var(--muted); cursor: pointer; }
+  .wpq details.twin table { border-collapse: collapse; font-size: 12px; margin-top: 6px; width: 100%; }
+  .wpq details.twin th, .wpq details.twin td { text-align: right; padding: 3px 8px;
+    border-bottom: 1px solid var(--hairline); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+  .wpq details.twin th:first-child, .wpq details.twin td:first-child { text-align: left; }
+  .wpq details.twin th { color: var(--muted); font-weight: 600; }
+
+  .wpq .map-card { position: relative; padding: 10px; }
+  .wpq .map-card svg { display: block; width: 100%; height: auto; }
+  .wpq .coast { fill: var(--land); stroke: var(--land-line); stroke-width: .8; }
+  .wpq .stn { stroke: var(--surface); stroke-width: 1.6; cursor: pointer; }
+  .wpq .stn.sel { stroke: var(--ink); stroke-width: 2.2; }
+  .wpq .stn-hit { fill: transparent; cursor: pointer; }
+  .wpq .map-leg { display: flex; align-items: center; gap: 6px; padding: 8px 8px 4px; flex-wrap: wrap;
+    font-size: 11.5px; color: var(--ink-2); }
+  .wpq .map-leg .b { width: 22px; height: 10px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+
+  .wpq .tip { position: absolute; pointer-events: none; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.13);
+    padding: 8px 11px; font-size: 12.5px; line-height: 1.5; max-width: 260px; display: none; z-index: 5; }
+  .wpq .tip b { font-size: 13px; }
+  .wpq .tip .k { color: var(--muted); }
+  .wpq .tip .v { font-variant-numeric: tabular-nums; }
+
+  .wpq .tbl-card { padding: 6px 0 2px; overflow-x: auto; }
+  .wpq table.score { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 720px; }
+  .wpq table.score th { text-align: right; font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); font-weight: 600; padding: 8px 12px; border-bottom: 1px solid var(--hairline); }
+  .wpq table.score td { text-align: right; padding: 6px 12px; border-bottom: 1px solid var(--hairline);
+    font-variant-numeric: tabular-nums; color: var(--ink-2); }
+  .wpq table.score th:first-child, .wpq table.score td:first-child,
+  .wpq table.score th:nth-child(2), .wpq table.score td:nth-child(2) { text-align: left; }
+  .wpq table.score td:first-child { color: var(--ink); }
+  .wpq table.score tr:last-child td { border-bottom: none; }
+  .wpq table.score tbody tr { cursor: pointer; }
+  .wpq table.score tbody tr:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+  .wpq table.score tbody tr.sel { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+  .wpq table.score tbody tr.sel td:first-child { font-weight: 650; }
+  .wpq footer { color: var(--muted); font-size: 12.5px; }
+  .wpq details.defs summary { cursor: pointer; font-size: 13.5px; color: var(--ink-2); }
+  .wpq details.defs summary b { color: var(--ink); font-weight: 650; }
+  .wpq details.defs dl { display: grid; grid-template-columns: max-content 1fr;
+    gap: 8px 14px; margin: 12px 0 4px; font-size: 13px; }
+  .wpq details.defs dt { font-weight: 650; }
+  .wpq details.defs dd { margin: 0; color: var(--ink-2); max-width: 88ch; }
+  @media (max-width: 640px) { .wpq details.defs dl { grid-template-columns: 1fr; gap: 2px; }
+    .wpq details.defs dd { margin-bottom: 8px; } }
+</style>
+<div class="wpq"><div class="wrap">
+  <header>
+    <h1>UK forecast verification — dashboard <span style="color:var(--muted);font-weight:500">(draft, private)</span></h1>
+    <p id="hdr-sub"></p>
+  </header>
+
+  <div class="chips" id="chips"><span class="lbl">Scope</span></div>
+
+  <div class="grid-a">
+    <div class="col">
+      <div class="card map-card">
+        <svg id="map" viewBox="0 0 372 578" role="img"
+             aria-label="Map of UK verification stations coloured by day-1 temperature MAE"></svg>
+        <div class="map-leg" id="map-leg"></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card chart-card" id="card-ets"></div>
+      <div class="card chart-card" id="card-temp"></div>
+    </div>
+  </div>
+
+  <div class="grid-b">
+    <div class="card chart-card" id="card-wind"></div>
+    <div class="card chart-card" id="card-conf"></div>
+    <div class="card chart-card" id="card-skill"></div>
+  </div>
+
+  <div class="card chart-card">
+    <details class="defs">
+      <summary><b>What the terms mean</b> — UKMO, persistence, climatology, MAE, ETS, Brier skill, ±q<sub>90</sub></summary>
+      <dl>
+        <dt>UKMO</dt><dd>The Met Office deterministic model (<code>ukmo_seamless</code> via
+          Open-Meteo) — the forecast being scored.</dd>
+        <dt>Persistence</dt><dd>The laziest possible forecast: "the weather will be what it was
+          24 h ago" (for lead <i>d</i> days, the observed value 24×max(<i>d</i>,1) h before the
+          target hour, from the same truth source). Beating it is the minimum bar for any model.</dd>
+        <dt>Climatology</dt><dd>"Typical weather for the date": the mean over 2024–26 for that
+          station, day-of-year and hour of day. No weather information at all — only the calendar.
+          A model earns its keep only while it beats this.</dd>
+        <dt>MAE</dt><dd>Mean absolute error — average size of the miss, in the variable's own
+          units. Identical to CRPS for a single-valued forecast.</dd>
+        <dt>ETS</dt><dd>Equitable Threat Score for the yes/no event "≥0.1 mm rain in the hour":
+          the fraction of rain hours correctly forecast, after subtracting the hits random chance
+          would get. 1 = perfect, 0 = no better than chance. <b>Climatology has no ETS line</b>:
+          its rain "forecast" is the historical frequency (~23%), which never crosses the 50%
+          yes/no threshold — it would never forecast rain, a degenerate ETS of 0 by construction.
+          The honest probabilistic comparison is the Brier-skill panel, where climatology is the
+          zero line the model must beat.</dd>
+        <dt>Brier skill</dt><dd>How much better the forecast's probabilities are than always
+          quoting the base rate (~23% chance of rain). Positive = adds information; negative =
+          a hard yes/no call is <i>worse</i> than the base rate, because it is overconfident.</dd>
+        <dt>±q<sub>90</sub></dt><dd>Conformal interval half-width: 90% of outcomes fall
+          within forecast ± q<sub>90</sub>. Calibrated on 2024 only, then verified on held-out 2025–26
+          (the coverage numbers in the tooltip).</dd>
+        <dt>95% CI</dt><dd>Bootstrap confidence interval on the curve (resampling whole
+          station-days, so correlated hours don't fake precision). Computed at UK scope; with
+          ~700k forecast/obs pairs per lead they come out at ±0.005–0.015 — too narrow to draw
+          as a visible band, so they live in the hover tooltip and each chart's data table.
+          A band will appear automatically wherever a CI is ever wide enough to see.</dd>
+      </dl>
+    </details>
+  </div>
+
+  <div class="card tbl-card">
+    <table class="score">
+      <thead><tr>
+        <th>Station</th><th>Nation</th><th>Temp MAE d1</th><th>d5</th>
+        <th>Wind MAE d1</th><th>Rain ETS d1</th><th>90% interval d1</th><th>n (d1)</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <footer>UKMO <code>ukmo_seamless</code> vs ERA5 reanalysis truth for the 2024–26 backfill.
+    Ground-station truth (Met Office obs, EA/SEPA/NRW rain gauges, METAR) has been collecting
+    since 2026-07-04 and will appear here as a truth-source toggle once enough accumulates;
+    ERA5 stays as truth for the pre-collection history (station obs aren't freely available
+    retrospectively). Click a map dot, chip or table row to change scope.
+    Bootstrap CI bands (station-day blocks) shown at UK scope only. MAE = CRPS for a
+    deterministic forecast. Conformal intervals: calibrated on 2024, coverage scored on
+    2025–26. Draft — not published.</footer>
+  <div class="tip" id="tip"></div>
+</div></div>
+<script>
+const COAST = __COAST__;
+const P = __PAYLOAD__;
+
+/* ---------- shared ---------- */
+const NS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const el = (tag, attrs, parent) => {
+  const n = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  if (parent) parent.appendChild(n);
+  return n;
+};
+const fmt = (v, d = 2) => v == null ? "—" : v.toFixed(d);
+const MODELS = [
+  { key: "ukmo_seamless", label: "UKMO", color: "var(--s1)" },
+  { key: "persistence", label: "Persistence", color: "var(--s2)" },
+  { key: "climatology_dayofyear", label: "Climatology", color: "var(--s3)" },
+];
+const tip = $("tip"), root = document.querySelector(".wpq");
+function showTip(html, ev) {
+  tip.innerHTML = html;
+  const r = root.getBoundingClientRect();
+  tip.style.display = "block";
+  const x = ev.clientX - r.left, y = ev.clientY - r.top;
+  tip.style.left = Math.min(x + 14, r.width - 270) + "px";
+  tip.style.top = (y + 10) + "px";
+}
+const hideTip = () => tip.style.display = "none";
+
+let scope = { type: "uk" };  // {type:'nation',name} | {type:'station',id}
+const scopeKey = () => scope.type === "uk" ? "UK"
+  : scope.type === "nation" ? "nation:" + scope.name : "station:" + scope.id;
+const scopeLabel = () => scope.type === "uk" ? "United Kingdom"
+  : scope.type === "nation" ? scope.name
+  : (P.stations.find(s => s.id === scope.id) || {}).name + " (station)";
+const scopeNation = () => scope.type === "uk" ? "UK"
+  : scope.type === "nation" ? scope.name
+  : (P.stations.find(s => s.id === scope.id) || {}).country;
+
+/* ---------- header / chips ---------- */
+$("hdr-sub").textContent =
+  "UKMO deterministic forecasts scored against " + P.truth + " at 33 stations, " +
+  P.period + ", forecast leads 0–5 days. Select a nation or station to re-cut every panel.";
+
+const NATIONS = [...new Set(P.stations.map(s => s.country))].sort();
+function renderChips() {
+  const c = $("chips");
+  c.querySelectorAll(".chip").forEach(n => n.remove());
+  const mk = (label, on, fn, extra) => {
+    const b = document.createElement("button");
+    b.className = "chip" + (on ? " on" : "");
+    b.innerHTML = label + (extra || "");
+    b.addEventListener("click", fn);
+    c.appendChild(b);
+  };
+  mk("All UK", scope.type === "uk", () => setScope({ type: "uk" }));
+  for (const n of NATIONS)
+    mk(n, scope.type === "nation" && scope.name === n,
+       () => setScope({ type: "nation", name: n }));
+  if (scope.type === "station")
+    mk(scopeLabel(), true, () => setScope({ type: "uk" }), "<span class='x'>&times;</span>");
+}
+
+/* ---------- generic charts ---------- */
+function clearCard(card) { card.innerHTML = ""; }
+function cardHeader(card, title, sub, seriesMeta) {
+  const h = document.createElement("h2"); h.textContent = title; card.appendChild(h);
+  const s = document.createElement("div"); s.className = "sub"; s.textContent = sub; card.appendChild(s);
+  if (seriesMeta && seriesMeta.length > 1) {
+    const l = document.createElement("div"); l.className = "leg-row";
+    l.innerHTML = seriesMeta.map(m =>
+      "<span class='k'><span class='" + (m.line ? "kline" : "kdot") + "' style='" +
+      (m.line ? "border-color:" : "background:") + m.color + "'></span>" + m.label + "</span>").join("");
+    card.appendChild(l);
+  }
+}
+function niceMax(v) {
+  for (const s of [0.1, 0.2, 0.25, 0.5, 1, 2, 2.5, 5, 10])
+    if (v <= s * 4.2) return Math.ceil(v / s) * s;
+  return Math.ceil(v);
+}
+function twinTable(card, head, rows) {
+  const d = document.createElement("details"); d.className = "twin";
+  d.innerHTML = "<summary>data table</summary><table><thead><tr>" +
+    head.map(h => "<th>" + h + "</th>").join("") + "</tr></thead><tbody>" +
+    rows.map(r => "<tr>" + r.map(v => "<td>" + v + "</td>").join("") + "</tr>").join("") +
+    "</tbody></table>";
+  card.appendChild(d);
+}
+
+function lineChart(card, cfg) {
+  // cfg: title, sub, unit, series [{label,color,vals[6]}], band {lo,hi,color}?
+  clearCard(card);
+  cardHeader(card, cfg.title, cfg.sub, cfg.series.map(s => ({ ...s, line: true })));
+  const W = 470, H = 248, ml = 38, mr = 92, mt = 24, mb = 36;
+  const pw = W - ml - mr, ph = H - mt - mb;
+  const all = cfg.series.flatMap(s => s.vals).concat(cfg.band ? cfg.band.hi : [])
+    .filter(v => v != null);
+  const ymax = cfg.yMax || niceMax(Math.max(...all) * 1.06);
+  const X = i => ml + i * pw / 5, Y = v => mt + ph * (1 - v / ymax);
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart" });
+  card.appendChild(svg);
+  const nt = 4;
+  for (let t = 0; t <= nt; t++) {
+    const v = ymax * t / nt, y = Y(v);
+    el("line", { x1: ml, x2: W - mr, y1: y, y2: y, class: t ? "gl" : "ax" }, svg);
+    el("text", { x: ml - 6, y: y + 3.5, "text-anchor": "end", class: "tick" }, svg)
+      .textContent = +v.toFixed(2);
+  }
+  for (let i = 0; i <= 5; i++)
+    el("text", { x: X(i), y: H - 22, "text-anchor": "middle", class: "tick" }, svg)
+      .textContent = i;
+  el("text", { x: ml + pw / 2, y: H - 6, "text-anchor": "middle", class: "tick" }, svg)
+    .textContent = "forecast lead (days)";
+  el("text", { x: ml - 6, y: 12, "text-anchor": "end", class: "tick" }, svg)
+    .textContent = cfg.unit;
+
+  if (cfg.band && cfg.band.lo.some(v => v != null)) {
+    // only draw a band the eye can actually see; sub-pixel CIs are stated in
+    // the subtitle and carried by the tooltip + data table instead
+    const thick = Math.max(...cfg.band.lo.map((lo, i) =>
+      lo == null ? 0 : Y(lo) - Y(cfg.band.hi[i])));
+    if (thick >= 2.5) {
+      const up = cfg.band.hi.map((v, i) => (i ? "L" : "M") + X(i) + " " + Y(v)).join("");
+      const dn = cfg.band.lo.map((v, i) => "L" + X(5 - i) + " " + Y(cfg.band.lo[5 - i])).join("");
+      el("path", { d: up + dn + "Z", fill: cfg.band.color, opacity: 0.13 }, svg);
+    }
+  }
+  const ends = [];
+  for (const s of cfg.series) {
+    const pts = s.vals.map((v, i) => v == null ? null : [X(i), Y(v)]).filter(Boolean);
+    if (!pts.length) continue;
+    el("path", { d: pts.map((p, i) => (i ? "L" : "M") + p[0] + " " + p[1]).join(""),
+      fill: "none", stroke: s.color, "stroke-width": 2,
+      "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+    const last = pts[pts.length - 1];
+    el("circle", { cx: last[0], cy: last[1], r: 4, fill: s.color,
+      stroke: "var(--surface)", "stroke-width": 2 }, svg);
+    ends.push({ y: last[1], label: s.label, x: last[0] });
+  }
+  // direct end-labels in series order (first series wins a collision; legend
+  // carries any dropped identity)
+  const placed = [];
+  for (const e of ends) {
+    if (placed.some(y => Math.abs(e.y - y) < 13)) continue;
+    el("text", { x: e.x + 9, y: e.y + 3.5, class: "endlbl" }, svg).textContent = e.label;
+    placed.push(e.y);
+  }
+  const xh = el("line", { y1: mt, y2: mt + ph, class: "xh" }, svg);
+  for (let i = 0; i <= 5; i++) {
+    const r = el("rect", { x: X(i) - pw / 10, y: mt, width: pw / 5, height: ph,
+      fill: "transparent" }, svg);
+    r.addEventListener("mousemove", ev => {
+      xh.setAttribute("x1", X(i)); xh.setAttribute("x2", X(i)); xh.style.opacity = 1;
+      showTip("<b>lead " + i + " d</b><br>" + cfg.series.map(s =>
+        "<span class='k'>" + s.label + "</span> <span class='v'>" +
+        fmt(s.vals[i]) + " " + cfg.unit + "</span>").join("<br>") +
+        (cfg.band && cfg.band.lo[i] != null
+          ? "<br><span class='k'>95% CI</span> <span class='v'>" + fmt(cfg.band.lo[i], 3) +
+            "–" + fmt(cfg.band.hi[i], 3) + "</span>" : ""), ev);
+    });
+    r.addEventListener("mouseleave", () => { xh.style.opacity = 0; hideTip(); });
+  }
+  twinTable(card, ["lead (d)", ...cfg.series.map(s => s.label)],
+    [0, 1, 2, 3, 4, 5].map(i => [i, ...cfg.series.map(s => fmt(s.vals[i]))]));
+}
+
+function colChart(card, cfg) {
+  // cfg: title, sub, unit, vals[6], color(v), yMin, yMax, fmtD, capIdx[], covTarget?
+  clearCard(card);
+  cardHeader(card, cfg.title, cfg.sub);
+  const W = 470, H = 248, ml = 40, mr = 14, mt = 24, mb = 36;
+  const pw = W - ml - mr, ph = H - mt - mb;
+  const yMin = cfg.yMin, yMax = cfg.yMax;
+  const X = i => ml + (i + 0.5) * pw / 6, Y = v => mt + ph * (yMax - v) / (yMax - yMin);
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart" });
+  card.appendChild(svg);
+  for (const t of cfg.ticks) {
+    if (t < yMin || t > yMax) continue;
+    el("line", { x1: ml, x2: W - mr, y1: Y(t), y2: Y(t), class: t === 0 ? "ax" : "gl" }, svg);
+    el("text", { x: ml - 6, y: Y(t) + 3.5, "text-anchor": "end", class: "tick" }, svg)
+      .textContent = t;
+  }
+  if (yMin > 0 || yMax < 0)
+    el("line", { x1: ml, x2: W - mr, y1: Y(yMin), y2: Y(yMin), class: "ax" }, svg);
+  for (let i = 0; i <= 5; i++)
+    el("text", { x: X(i), y: H - 22, "text-anchor": "middle", class: "tick" }, svg)
+      .textContent = i;
+  el("text", { x: ml + pw / 2, y: H - 6, "text-anchor": "middle", class: "tick" }, svg)
+    .textContent = "forecast lead (days)";
+  el("text", { x: ml - 6, y: 12, "text-anchor": "end", class: "tick" }, svg)
+    .textContent = cfg.unit;
+  if (cfg.target != null) {
+    el("line", { x1: ml, x2: W - mr, y1: Y(cfg.target), y2: Y(cfg.target),
+      stroke: "var(--ink-2)", "stroke-width": 1 }, svg);
+    el("text", { x: W - mr, y: Y(cfg.target) - 4, "text-anchor": "end", class: "tick" }, svg)
+      .textContent = "target " + cfg.target;
+  }
+  const bw = Math.min(24, pw / 6 - 14);
+  cfg.vals.forEach((v, i) => {
+    if (v == null) return;
+    const zero = Math.max(Math.min(0, yMax), yMin);
+    const y0 = Y(Math.max(v, zero)), y1 = Y(Math.min(v, zero));
+    const up = v >= zero, hgt = Math.max(y1 - y0, 1.5), r = Math.min(4, hgt);
+    // rounded at the data end, square at the baseline
+    const x = X(i) - bw / 2;
+    const d = up
+      ? `M${x} ${y1}V${y0 + r}Q${x} ${y0} ${x + r} ${y0}H${x + bw - r}Q${x + bw} ${y0} ${x + bw} ${y0 + r}V${y1}Z`
+      : `M${x} ${y0}V${y1 - r}Q${x} ${y1} ${x + r} ${y1}H${x + bw - r}Q${x + bw} ${y1} ${x + bw} ${y1 - r}V${y0}Z`;
+    const p = el("path", { d, fill: cfg.color(v) }, svg);
+    if ((cfg.capIdx || []).includes(i))
+      el("text", { x: X(i), y: up ? y0 - 5 : y1 + 12, class: "caplbl" }, svg)
+        .textContent = cfg.fmtV(v);
+    const hit = el("rect", { x: X(i) - pw / 12, y: mt, width: pw / 6, height: ph,
+      fill: "transparent" }, svg);
+    hit.addEventListener("mousemove", ev =>
+      showTip("<b>lead " + i + " d</b><br><span class='k'>" + cfg.title +
+        "</span> <span class='v'>" + cfg.fmtV(v) + "</span>" +
+        (cfg.extra ? "<br>" + cfg.extra(i) : ""), ev));
+    hit.addEventListener("mouseleave", hideTip);
+  });
+  twinTable(card, ["lead (d)", cfg.unit || "value"],
+    [0, 1, 2, 3, 4, 5].map(i => [i, cfg.fmtV(cfg.vals[i])]));
+}
+
+/* ---------- map ---------- */
+const LON0 = -8.7, LAT1 = 59.65, KX = Math.cos(55.3 * Math.PI / 180), S = 57.5;
+const px = (lon, lat) => [(lon - LON0) * KX * S, (LAT1 - lat) * S];
+const QCOLORS = ["var(--q1)", "var(--q2)", "var(--q3)", "var(--q4)", "var(--q5)"];
+const maeVals = P.stations.map(s => s.mae1).filter(v => v != null);
+const qlo = Math.min(...maeVals), qhi = Math.max(...maeVals);
+const qbin = v => Math.min(4, Math.floor((v - qlo) / ((qhi - qlo) / 5 || 1)));
+const mapDots = {};
+function buildMap() {
+  const svg = $("map");
+  el("rect", { width: 372, height: 578, fill: "var(--sea)" }, svg);
+  for (const key of ["ie", "im", "uk"])
+    for (const ring of COAST[key] || []) {
+      const d = ring.map((p, i) =>
+        (i ? "L" : "M") + px(p[0], p[1]).map(v => v.toFixed(1)).join(" ")).join("") + "Z";
+      const path = el("path", { d, class: "coast" }, svg);
+      if (key === "ie") path.setAttribute("opacity", "0.55");
+    }
+  for (const s of P.stations) {
+    const [x, y] = px(s.lon, s.lat);
+    const c = el("circle", { cx: x, cy: y, r: 6.5, class: "stn",
+      fill: QCOLORS[qbin(s.mae1)] }, svg);
+    mapDots[s.id] = c;
+    const hit = el("circle", { cx: x, cy: y, r: 13, class: "stn-hit" }, svg);
+    const go = () => setScope(scope.type === "station" && scope.id === s.id
+      ? { type: "uk" } : { type: "station", id: s.id });
+    c.addEventListener("click", go);
+    hit.addEventListener("click", go);
+    hit.addEventListener("mousemove", ev => {
+      c.setAttribute("r", 8.5);
+      showTip("<b>" + s.name + "</b> <span class='k'>" + s.country + "</span><br>" +
+        "<span class='k'>temp MAE d1/d5</span> <span class='v'>" + fmt(s.mae1) + " / " +
+        fmt(s.mae5) + " °C</span><br>" +
+        "<span class='k'>rain ETS d1</span> <span class='v'>" + fmt(s.ets1) + "</span><br>" +
+        "<span class='k'>click to scope dashboard</span>", ev);
+    });
+    hit.addEventListener("mouseleave", () => { c.setAttribute("r", 6.5); hideTip(); });
+  }
+  const leg = $("map-leg");
+  const step = (qhi - qlo) / 5;
+  leg.innerHTML = "<span style='color:var(--muted)'>day-1 temp MAE</span>" +
+    QCOLORS.map((c, i) => "<span class='b' style='background:" + c + "' title='" +
+      (qlo + i * step).toFixed(2) + "–" + (qlo + (i + 1) * step).toFixed(2) + " °C'></span>")
+      .join("") +
+    "<span>" + qlo.toFixed(2) + "–" + qhi.toFixed(2) + " °C</span>";
+}
+
+/* ---------- scorecard ---------- */
+function buildTable() {
+  $("rows").innerHTML = P.stations.slice()
+    .sort((a, b) => (a.mae1 ?? 9) - (b.mae1 ?? 9))
+    .map(s => {
+      const q = (P.conformal[s.country] || {}).q || [];
+      return "<tr data-id='" + s.id + "'><td>" + s.name + "</td><td>" + s.country +
+        "</td><td>" + fmt(s.mae1) + " °C</td><td>" + fmt(s.mae5) + " °C</td><td>" +
+        fmt(s.wind1) + " m/s</td><td>" + fmt(s.ets1) + "</td><td>&plusmn;" +
+        fmt(q[1], 1) + " °C</td><td>" + (s.n1 ?? "—").toLocaleString() + "</td></tr>";
+    }).join("");
+  $("rows").addEventListener("click", e => {
+    const row = e.target.closest("tr");
+    if (row) setScope(scope.type === "station" && scope.id === row.dataset.id
+      ? { type: "uk" } : { type: "station", id: row.dataset.id });
+  });
+}
+
+/* ---------- render ---------- */
+function render() {
+  renderChips();
+  const key = scopeKey(), cur = P.curves[key], lbl = scopeLabel();
+  const isUK = scope.type === "uk";
+  const meta = keys => MODELS.filter(m => keys.includes(m.key));
+
+  lineChart($("card-temp"), {
+    title: "Temperature MAE by lead — " + lbl,
+    sub: "°C vs " + P.truth + (isUK
+      ? " · 95% CIs are ±0.005–0.015 °C — narrower than the line itself; hover a lead or open the data table"
+      : ""),
+    unit: "°C",
+    series: meta(Object.keys(cur.temp)).map(m =>
+      ({ label: m.label, color: m.color, vals: cur.temp[m.key] })),
+    band: isUK && P.ci.temp ? { ...P.ci.temp, color: "var(--s1)" } : null,
+  });
+  lineChart($("card-ets"), {
+    title: "Rain skill (ETS) by lead — " + lbl,
+    sub: "occurrence ≥0.1 mm/h vs " + P.truth + " · higher is better · no climatology line "
+      + "(it never forecasts rain — see definitions)"
+      + (isUK ? " · 95% CIs ±0.005 — narrower than the line; hover for values" : ""),
+    unit: "ETS",
+    series: meta(Object.keys(cur.ets)).map(m =>
+      ({ label: m.label, color: m.color, vals: cur.ets[m.key] })),
+    band: isUK && P.ci.ets ? { ...P.ci.ets, color: "var(--s1)" } : null,
+  });
+  lineChart($("card-wind"), {
+    title: "Wind MAE by lead — " + lbl,
+    sub: "10 m wind, m/s vs " + P.truth + " · UKMO crosses climatology near day 3–4",
+    unit: "m/s",
+    series: meta(Object.keys(cur.wind)).map(m =>
+      ({ label: m.label, color: m.color, vals: cur.wind[m.key] })),
+  });
+
+  const nation = scopeNation();
+  const conf = P.conformal[nation] || P.conformal.UK;
+  const confMax = niceMax(Math.max(...conf.q.filter(v => v != null)) * 1.1);
+  colChart($("card-conf"), {
+    title: "90% conformal interval — " + nation,
+    sub: "half-width of the interval that catches 90% of outcomes (°C), fit 2024 / scored 2025-26" +
+      (scope.type === "station" ? " · nation-level" : ""),
+    unit: "± °C", vals: conf.q, color: () => "var(--s1)",
+    yMin: 0, yMax: confMax,
+    ticks: Array.from({ length: Math.floor(confMax) + 1 }, (_, i) => i),
+    capIdx: [0, 5], fmtV: v => "±" + fmt(v, 1) + " °C",
+    extra: i => "<span class='k'>coverage (target 0.90)</span> <span class='v'>" +
+      fmt(conf.cov[i], 3) + "</span>",
+  });
+  colChart($("card-skill"), {
+    title: "Rain Brier skill vs climatology — UK",
+    sub: "binary forecast, all-UK, " + P.truth + " truth · negative = worse than base rate",
+    unit: "skill", vals: P.brier.skill,
+    color: v => v >= 0 ? "var(--s1)" : "var(--neg)",
+    yMin: -0.6, yMax: 0.2, ticks: [-0.6, -0.4, -0.2, 0, 0.2],
+    capIdx: [0, 5], fmtV: v => (v > 0 ? "+" : "") + fmt(v),
+    extra: i => "<span class='k'>reliability / resolution</span> <span class='v'>" +
+      fmt(P.brier.rel[i], 3) + " / " + fmt(P.brier.res[i], 3) + "</span>",
+  });
+
+  for (const [id, dot] of Object.entries(mapDots))
+    dot.classList.toggle("sel", scope.type === "station" && scope.id === id);
+  document.querySelectorAll("#rows tr").forEach(r =>
+    r.classList.toggle("sel", scope.type === "station" && scope.id === r.dataset.id));
+}
+function setScope(s) { scope = s; render(); }
+
+buildMap();
+buildTable();
+render();
+</script>
