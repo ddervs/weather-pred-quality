@@ -144,10 +144,12 @@
           A model earns its keep only while it beats this.</dd>
         <dt>MAE</dt><dd>Mean absolute error — average size of the miss, in the variable's own
           units. Identical to CRPS for a single-valued forecast.</dd>
-        <dt>ETS</dt><dd>Equitable Threat Score for the yes/no event "≥0.1 mm rain in the hour":
-          the fraction of rain hours correctly forecast, after subtracting the hits random chance
-          would get. 1 = perfect, 0 = no better than chance. <b>Climatology has no ETS line</b>:
-          its rain "forecast" is the historical frequency (~23%), which never crosses the 50%
+        <dt>ETS</dt><dd>Equitable Threat Score for the selected yes/no rain event (the "Rain
+          event" buckets above; "Any" = ≥0.1 mm in the hour): the fraction of event hours
+          correctly forecast, after subtracting the hits random chance would get. 1 = perfect,
+          0 = no better than chance. Heavier buckets are rarer (any: ~23% of hours, ≥4 mm/h:
+          ~0.2%), and skill collapses with severity. <b>Climatology has no ETS line</b>:
+          its rain "forecast" is the historical frequency, which never crosses the 50%
           yes/no threshold — it would never forecast rain, a degenerate ETS of 0 by construction.
           The honest probabilistic comparison is the Brier-skill panel, where climatology is the
           zero line the model must beat.</dd>
@@ -217,6 +219,9 @@ function showTip(html, ev) {
 const hideTip = () => tip.style.display = "none";
 
 let scope = { type: "uk" };  // {type:'nation',name} | {type:'station',id}
+let bucket = "any";          // rain event: "any" (>=0.1 mm/h) | "0.5" | "1" | "2" | "4"
+const BUCKETS = [["any", "Any"], ["0.5", "≥0.5"], ["1", "≥1"], ["2", "≥2"], ["4", "≥4 mm/h"]];
+const bucketText = () => bucket === "any" ? "≥0.1 mm/h (any rain)" : "≥" + bucket + " mm/h";
 const scopeKey = () => scope.type === "uk" ? "UK"
   : scope.type === "nation" ? "nation:" + scope.name : "station:" + scope.id;
 const scopeLabel = () => scope.type === "uk" ? "United Kingdom"
@@ -234,7 +239,7 @@ $("hdr-sub").textContent =
 const NATIONS = [...new Set(P.stations.map(s => s.country))].sort();
 function renderChips() {
   const c = $("chips");
-  c.querySelectorAll(".chip").forEach(n => n.remove());
+  c.querySelectorAll(".chip, .dyn").forEach(n => n.remove());
   const mk = (label, on, fn, extra) => {
     const b = document.createElement("button");
     b.className = "chip" + (on ? " on" : "");
@@ -248,6 +253,11 @@ function renderChips() {
        () => setScope({ type: "nation", name: n }));
   if (scope.type === "station")
     mk(scopeLabel(), true, () => setScope({ type: "uk" }), "<span class='x'>&times;</span>");
+  const sep = document.createElement("span");
+  sep.className = "lbl dyn"; sep.style.marginLeft = "14px"; sep.textContent = "Rain event";
+  c.appendChild(sep);
+  for (const [key, label] of BUCKETS)
+    mk(label, bucket === key, () => { bucket = key; render(); });
 }
 
 /* ---------- generic charts ---------- */
@@ -285,7 +295,7 @@ function lineChart(card, cfg) {
   const pw = W - ml - mr, ph = H - mt - mb;
   const all = cfg.series.flatMap(s => s.vals).concat(cfg.band ? cfg.band.hi : [])
     .filter(v => v != null);
-  const ymax = cfg.yMax || niceMax(Math.max(...all) * 1.06);
+  const ymax = cfg.yMax || niceMax((all.length ? Math.max(...all) : 1) * 1.06);
   const X = i => ml + i * pw / 5, Y = v => mt + ph * (1 - v / ymax);
   const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart" });
   card.appendChild(svg);
@@ -494,15 +504,17 @@ function render() {
       ({ label: m.label, color: m.color, vals: cur.temp[m.key] })),
     band: isUK && P.ci.temp ? { ...P.ci.temp, color: "var(--s1)" } : null,
   });
+  const bcur = cur.ets[bucket] || cur.ets.any;
   lineChart($("card-ets"), {
     title: "Rain skill (ETS) by lead — " + lbl,
-    sub: "occurrence ≥0.1 mm/h vs " + P.truth + " · higher is better · no climatology line "
-      + "(it never forecasts rain — see definitions)"
-      + (isUK ? " · 95% CIs ±0.005 — narrower than the line; hover for values" : ""),
+    sub: "rain " + bucketText() + " vs " + P.truth + " · higher is better · no climatology "
+      + "line (it never forecasts rain — see definitions)"
+      + (isUK && bucket === "any"
+        ? " · 95% CIs ±0.005 — narrower than the line; hover for values" : ""),
     unit: "ETS",
-    series: meta(Object.keys(cur.ets)).map(m =>
-      ({ label: m.label, color: m.color, vals: cur.ets[m.key] })),
-    band: isUK && P.ci.ets ? { ...P.ci.ets, color: "var(--s1)" } : null,
+    series: meta(Object.keys(bcur)).map(m =>
+      ({ label: m.label, color: m.color, vals: bcur[m.key] })),
+    band: isUK && bucket === "any" && P.ci.ets ? { ...P.ci.ets, color: "var(--s1)" } : null,
   });
   lineChart($("card-wind"), {
     title: "Wind MAE by lead — " + lbl,
@@ -528,7 +540,8 @@ function render() {
   });
   colChart($("card-skill"), {
     title: "Rain Brier skill vs climatology — UK",
-    sub: "binary forecast, all-UK, " + P.truth + " truth · negative = worse than base rate",
+    sub: "any rain (≥0.1 mm/h), binary forecast, all-UK, " + P.truth
+      + " truth · negative = worse than base rate",
     unit: "skill", vals: P.brier.skill,
     color: v => v >= 0 ? "var(--s1)" : "var(--neg)",
     yMin: -0.6, yMax: 0.2, ticks: [-0.6, -0.4, -0.2, 0, 0.2],

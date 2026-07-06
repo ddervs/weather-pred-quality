@@ -27,6 +27,9 @@ OUT_HTML = ROOT / "docs" / "dashboard.html"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 LEADS = list(range(6))
 MODELS = ["ukmo_seamless", "persistence", "climatology_dayofyear"]
+# bucket key (shown in the UI) -> metrics variable; "any" is the 0.1 mm/h default
+RAIN_BUCKETS = [("any", "rain_occurred"), ("0.5", "rain_ge_0.5"),
+                ("1", "rain_ge_1"), ("2", "rain_ge_2"), ("4", "rain_ge_4")]
 
 WRAPPER = """<!DOCTYPE html>
 <html lang="en">
@@ -58,10 +61,11 @@ def scope_curves(df: pl.DataFrame) -> dict:
     return {
         "temp": {m: curve(df, m, "temp_c", "mae") for m in MODELS},
         "wind": {m: curve(df, m, "wind_ms", "mae") for m in MODELS},
-        # climatology rain is a ~0.23 probability -> binarised at 0.5 it never
+        # climatology rain is a small probability -> binarised at 0.5 it never
         # forecasts rain, so its ETS is degenerate; show UKMO vs persistence
-        "ets": {m: curve(df, m, "rain_occurred", "ets")
-                for m in ("ukmo_seamless", "persistence")},
+        "ets": {key: {m: curve(df, m, var, "ets")
+                      for m in ("ukmo_seamless", "persistence")}
+                for key, var in RAIN_BUCKETS},
     }
 
 

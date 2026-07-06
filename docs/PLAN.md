@@ -140,28 +140,46 @@ One item that stays here because it's an API-call constraint, not a data-shape f
 
 - Met Office `nearest` endpoint needs ≤2 dp coords; obs API is per-station geohash.
 
-## NEXT CHUNK: dashboard v1 (private)
+## DONE 2026-07-06: dashboard v1 (private)
 
-Goal: the numbers exist; make them legible. Static, self-contained HTML from the
-committed `data/metrics/*.parquet` — no server, £0. Private first (open locally /
-artifact); public Pages + personal site only when Danial says so.
+`scripts/make_dashboard.py` + `scripts/templates/dashboard.html` →
+`docs/dashboard.html` (self-contained, no CDN, dark-mode; regenerated weekly in
+metrics.yml; README screenshot). Selectable station map (day-1 temp MAE bins) +
+nation/station scope chips re-cut every panel; temp/rain/wind lead curves vs
+persistence + climatology; conformal card; Brier-skill card; scorecard table;
+plain-language definitions block; data-table twin under every chart. Reviewed by
+Danial 2026-07-06. Notes: CI bands auto-hide when narrower than the line (current
+bootstrap CIs are sub-pixel); **rain buckets** added same day — `rain_ge_{0.5,1,2,4}`
+variables in wpq/metrics.py (model + persistence + climatology, amount-reporting
+truth sources only) with a "Rain event" chip group in the dashboard ("Any" = 0.1).
+Finding: ETS collapses with severity (day-0: 0.34 any → 0.08 at ≥4 mm/h; ~0 by day 4-5).
 
-1. `scripts/make_dashboard.py` → `docs/dashboard.html`, following the pattern of
-   `scripts/make_station_map.py` + `scripts/templates/` (embed JSON payload +
-   inline JS/CSS; no CDN so it works offline and on Pages later).
-2. Panels, in priority order:
-   - Lead curves: temp MAE + rain ETS by lead with the bootstrap CI bands
-     (bootstrap_ci.parquet), UKMO vs persistence vs climatology.
-   - **The wind panel**: UKMO wind MAE vs climatology crossing at day ~3.5 —
-     the headline finding, deserves its own chart.
-   - Conformal: half-width fan (±q̂ by lead) + coverage-vs-target strip, per nation.
-   - Brier decomposition stacked bars by lead (shows the negative-skill story).
-   - Per-station scorecard table (station, nation, temp MAE d1/d5, ETS d1, n) from
-     metrics.parquet sufficient stats — re-aggregate sums, never average MAEs.
-3. Screenshot into README like the station map (`--screenshot` flag, same
-   playwright pattern as make_station_map.py).
-4. Regenerate in metrics.yml after calibration step; commit docs/dashboard.html.
-   Keep the payload lean: aggregate in Python, embed only what's plotted (< ~200 kB).
+## NEXT CHUNK: live-forecast reliability page (Danial's ask 2026-07-06 — big, staged)
+
+Goal: not just scoring the past — for each station, pull the CURRENT UKMO forecast
+in the browser and translate it into calibrated event statements backed by our
+verification history: "forecast says 2.3 mm at 15:00 tomorrow → when it said that
+in 2024-26, ≥1 mm actually fell 64 % of the time; 90 % of temps landed within
+±1.7 °C of the number shown". Static page, no server: api.open-meteo.com sends
+CORS `*`, so the page can fetch live client-side (attribution required, £0).
+
+Stages (one session each-ish):
+1. **Conditional reliability tables** from the backfill: P(obs event | forecast
+   bucket, lead, nation-or-station) for the rain buckets, plus temp interval
+   half-widths from conformal.parquet. Precompute in Python → compact JSON
+   (mind payload size; nation-level first, station-level only if it stays lean).
+   Watch small-n cells (heavy rain × long lead × station is sparse — back off
+   to nation or wider bucket, and say so in the UI).
+2. **The page**: per-station "next 5 days" strip — live Open-Meteo fetch
+   (`ukmo_seamless`, same params as the collector), apply the lookup tables,
+   render event probabilities + intervals. Graceful degradation: no network →
+   history-only view. Extend dashboard or sibling page (`docs/live.html`);
+   reuse the map + scope chrome.
+3. **Calibrated PoP upgrade** (once ensembles span ~4 wks, from 2026-07-06):
+   member-fraction PoP corrected by an isotonic/reliability-curve fit against
+   the accumulating live-obs record; replaces the binary-conditioned tables.
+Caveats: conditional tables are ERA5-truth until live obs mature (label it);
+verify Open-Meteo ToS attribution line on the page before any public hosting.
 
 ## Later chunks (in order, one per session-ish)
 

@@ -36,8 +36,12 @@ For each `(model, truth_source, variable, lead, station, month)` cell, with erro
 ## Rain occurrence: contingency-table scores
 
 The event is `rain_occurred` (≥ 0.1 mm in the hour; per-source definitions in
-[data-layout.md](data-layout.md)). Forecast is currently binarised the same way — a
-deterministic yes/no. Each pair lands in one of: **hit**, **miss** (it rained,
+[data-layout.md](data-layout.md)). Heavier buckets exist as separate variables
+`rain_ge_{0.5,1,2,4}` (mm/h, 2026-07-06) — derived from `precip_mm` on both the
+forecast and observation side, so they are only scored against truth sources that
+report amounts (ERA5 + the EA/SEPA/NRW gauges), not the code-based occurrence
+sources (land_obs weather codes, METAR wx strings). Forecast is currently binarised
+the same way as the event — a deterministic yes/no. Each pair lands in one of: **hit**, **miss** (it rained,
 unforecast), **false alarm** (forecast, stayed dry), **correct negative**. From these:
 
 - **POD** — hit rate: fraction of actual rain hours the forecast caught.

@@ -22,6 +22,8 @@ Models:
 Continuous stats: n, sum_err, sum_abs_err, sum_sq_err -> bias, mae, rmse.
 CRPS for a deterministic forecast equals MAE - read mae as crps for ukmo_seamless.
 Rain occurrence: forecast = precip_mm >= 0.1 as {0,1} (probabilistic upgrade later);
+heavier buckets rain_ge_{0.5,1,2,4} (mm/h) are derived from precip_mm on both sides
+(amount-reporting truth sources only - era5 + rain gauges);
 stats n, sum_brier, sum_fcst, sum_obs, hits, misses, false_alarms, correct_negatives
 -> brier, base_rate, pod, far, csi, ets.
 
@@ -41,6 +43,24 @@ BASELINE_LEAD_DAYS = range(6)
 
 GRAIN = ["model", "truth_source", "variable", "lead_days", "station_id", "month"]
 
+# Extra yes/no rain events beyond the 0.1 mm/h `rain_occurred` default. Derived
+# from precip_mm on BOTH sides of the join, so they only exist against truth
+# sources that report amounts (era5, ea/sepa/nrw gauges) - code-based occurrence
+# (land_obs weather codes, METAR wxString) stays 0.1-only under `rain_occurred`.
+RAIN_THRESHOLDS = (0.5, 1.0, 2.0, 4.0)
+
+
+def add_rain_events(df: pl.DataFrame, value_col: str) -> pl.DataFrame:
+    """Append rain_ge_{t} binary variables derived from the precip_mm rows."""
+    precip = df.filter(pl.col("variable") == "precip_mm")
+    parts = [df]
+    for t in RAIN_THRESHOLDS:
+        parts.append(precip.with_columns(
+            (pl.col(value_col) >= t).cast(pl.Float64).alias(value_col),
+            pl.lit(f"rain_ge_{t:g}").alias("variable"),
+        ))
+    return pl.concat(parts)
+
 STAT_COLS = ["n", "sum_err", "sum_abs_err", "sum_sq_err", "sum_brier",
              "sum_fcst", "sum_obs", "hits", "misses", "false_alarms",
              "correct_negatives"]
@@ -58,7 +78,7 @@ def load_norm() -> tuple[pl.DataFrame, pl.DataFrame]:
         pl.read_parquet(NORM_DIR / "observations.parquet")
         .rename({"source": "truth_source", "value": "o"})
     )
-    return fcst, obs
+    return add_rain_events(fcst, "value"), add_rain_events(obs, "o")
 
 
 def _month() -> pl.Expr:
@@ -101,20 +121,21 @@ def agg_binary(joined: pl.DataFrame) -> pl.DataFrame:
 
 def model_stats(fcst: pl.DataFrame, obs: pl.DataFrame) -> list[pl.DataFrame]:
     """UKMO forecasts vs every obs source carrying the same variable."""
-    continuous = fcst.join(
-        obs.filter(pl.col("variable") != "rain_occurred"),
+    is_rain = pl.col("variable").str.starts_with("rain")
+    continuous = fcst.filter(~is_rain).join(
+        obs.filter(~is_rain),
         on=["station_id", "valid_time", "variable"],
     ).rename({"value": "f"})
 
-    rain_fcst = (
-        fcst.filter(pl.col("variable") == "precip_mm")
-        .with_columns(
-            (pl.col("value") >= RAIN_THRESHOLD_MM).cast(pl.Float64).alias("f"),
+    rain_fcst = pl.concat([
+        fcst.filter(pl.col("variable") == "precip_mm").with_columns(
+            (pl.col("value") >= RAIN_THRESHOLD_MM).cast(pl.Float64).alias("value"),
             pl.lit("rain_occurred").alias("variable"),
-        )
-    )
+        ),
+        fcst.filter(is_rain),  # rain_ge_* already binarised in add_rain_events
+    ]).rename({"value": "f"})
     rain = rain_fcst.join(
-        obs.filter(pl.col("variable") == "rain_occurred"),
+        obs.filter(is_rain),
         on=["station_id", "valid_time", "variable"],
     )
     return [agg_continuous(continuous), agg_binary(rain)]
@@ -135,8 +156,9 @@ def persistence_stats(obs: pl.DataFrame) -> list[pl.DataFrame]:
             pl.lit("persistence").alias("model"),
             pl.lit(d, dtype=pl.Int32).alias("lead_days"),
         )
-        out.append(agg_continuous(joined.filter(pl.col("variable") != "rain_occurred")))
-        out.append(agg_binary(joined.filter(pl.col("variable") == "rain_occurred")))
+        is_rain = pl.col("variable").str.starts_with("rain")
+        out.append(agg_continuous(joined.filter(~is_rain)))
+        out.append(agg_binary(joined.filter(is_rain)))
     return out
 
 
@@ -160,9 +182,10 @@ def climatology_stats(obs: pl.DataFrame) -> list[pl.DataFrame]:
             pl.lit(0, dtype=pl.Int32).alias("lead_days"),
         )
     )
+    is_rain = pl.col("variable").str.starts_with("rain")
     lead0 = [
-        agg_continuous(joined.filter(pl.col("variable") != "rain_occurred")),
-        agg_binary(joined.filter(pl.col("variable") == "rain_occurred")),
+        agg_continuous(joined.filter(~is_rain)),
+        agg_binary(joined.filter(is_rain)),
     ]
     # identical at every lead: replicate the aggregated rows, not the joins
     return [
