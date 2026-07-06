@@ -154,7 +154,9 @@
         <dt>ETS</dt><dd>Equitable Threat Score for the selected yes/no rain event (the "Rain
           event" buckets above; "Any" = ≥0.1 mm in the hour): the fraction of event hours
           correctly forecast, after subtracting the hits random chance would get. 1 = perfect,
-          0 = no better than chance. Heavier buckets are rarer (any: ~23% of hours, ≥4 mm/h:
+          0 = no better than chance. The bucket names follow the Met Office intensity bands —
+          slight &lt;0.5 mm/h, moderate 0.5–4, heavy &gt;4 (torrential would be ~8+, too rare
+          here to score). Heavier buckets are much rarer (any rain: ~23% of hours, heavy:
           ~0.2%), and skill collapses with severity. <b>Climatology has no ETS line</b>:
           its rain "forecast" is the historical frequency, which never crosses the 50%
           yes/no threshold — it would never forecast rain, a degenerate ETS of 0 by construction.
@@ -227,8 +229,19 @@ const hideTip = () => tip.style.display = "none";
 
 let scope = { type: "uk" };  // {type:'nation',name} | {type:'station',id}
 let bucket = "any";          // rain event: "any" (>=0.1 mm/h) | "0.5" | "1" | "2" | "4"
-const BUCKETS = [["any", "Any"], ["0.5", "≥0.5"], ["1", "≥1"], ["2", "≥2"], ["4", "≥4 mm/h"]];
-const bucketText = () => bucket === "any" ? "≥0.1 mm/h (any rain)" : "≥" + bucket + " mm/h";
+// human labels anchored to Met Office intensity bands
+// (slight < 0.5 mm/h, moderate 0.5-4, heavy > 4; "torrential" ~8+)
+const BUCKETS = [
+  ["any", "Any rain", "≥0.1 mm/h — anything that wets the pavement"],
+  ["0.5", "Light ≥0.5", "≥0.5 mm/h — light but steady; umbrella weather"],
+  ["1", "Moderate ≥1", "≥1 mm/h — properly raining"],
+  ["2", "Soaking ≥2", "≥2 mm/h — top end of Met Office “moderate”; you get wet fast"],
+  ["4", "Heavy ≥4", "≥4 mm/h — Met Office “heavy”; a real downpour"],
+];
+const bucketText = () => {
+  const b = BUCKETS.find(x => x[0] === bucket);
+  return b[2];
+};
 const scopeKey = () => scope.type === "uk" ? "UK"
   : scope.type === "nation" ? "nation:" + scope.name : "station:" + scope.id;
 const scopeLabel = () => scope.type === "uk" ? "United Kingdom"
@@ -261,10 +274,12 @@ function renderChips() {
   if (scope.type === "station")
     mk(scopeLabel(), true, () => setScope({ type: "uk" }), "<span class='x'>&times;</span>");
   const sep = document.createElement("span");
-  sep.className = "lbl dyn"; sep.style.marginLeft = "14px"; sep.textContent = "Rain event";
+  sep.className = "lbl dyn"; sep.style.marginLeft = "14px"; sep.textContent = "Rain event (mm/h)";
   c.appendChild(sep);
-  for (const [key, label] of BUCKETS)
+  for (const [key, label, long] of BUCKETS) {
     mk(label, bucket === key, () => { bucket = key; render(); });
+    c.lastChild.title = long;
+  }
 }
 
 /* ---------- generic charts ---------- */
