@@ -58,7 +58,7 @@ foundation: verify one provider's forecasts honestly.
                                               bootstrap_ci}.parquet
   metrics ──► scripts/make_dashboard.py ──► docs/dashboard.html (static, self-contained)
 
-                    weekly, Monday 06:20 UTC (GitHub Actions: weekly-report.yml)
+                    weekly, Monday 03:20 UTC + cron delay (GitHub Actions: weekly-report.yml)
   raw + norm ──► scripts/make_weekly_report.py ──► red-amber-green health report,
         posted as an instantly-closed @-mention issue (label weekly-report) so GitHub
         emails it. Hard-red backstop: collect.yml alerts the same way if any source

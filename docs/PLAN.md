@@ -25,7 +25,8 @@ but only after everything works privately** (his explicit preference, 2026-07-04
   manual dispatch. Now self-scheduled: collect ensembles when the last
   ensemble raw file is ≥10 h old (~2/day). Assume ALL cron times are +2–5 h.
 - **Weekly health email wired in** (2026-07-05, side task): `weekly-report.yml`
-  (Mondays 06:20 UTC) runs `scripts/make_weekly_report.py` → RAG tables for the
+  (Mondays 03:20 UTC — cron fires +2–5 h late, landing it in the UK morning)
+  runs `scripts/make_weekly_report.py` → RAG tables for the
   7 collector sources (run completeness + station coverage) and for model ×
   variable metrics vs a trailing 4-week live-obs baseline (⚪ until ~4 weeks of
   live obs exist, ~2026-08). Delivery = the scotbet pattern: issue created with
