@@ -7,8 +7,10 @@ name: weekly-report
 
 on:
   schedule:
-    # Mondays 06:20 UTC (~07:20 UK summer) - after Sunday 03:40's metrics rebuild
-    - cron: "20 6 * * 1"
+    # Mondays 03:20 UTC. GitHub cron fires HOURS late (06:20 ran at 11:04 on
+    # 2026-07-06 -> lunchtime email), so schedule pre-dawn and let the observed
+    # +2-5h delay land it in the UK morning. Still after Sunday's metrics rebuild.
+    - cron: "20 3 * * 1"
   workflow_dispatch:
 
 permissions:
