@@ -2,8 +2,9 @@ name: collect
 
 on:
   schedule:
-    # 20-min offset avoids the top-of-hour GitHub cron rush; hours 0/12 include ensembles
-    # (wpq.collect gates ensembles on UTC hour 0,1,12,13 so modest cron delay is tolerated)
+    # 20-min offset avoids the top-of-hour GitHub cron rush. Runs still arrive HOURS
+    # late (observed 00:20 -> 04:41), so wpq.collect self-schedules ensembles by the
+    # age of the last ensemble raw file (>=10h -> ~2/day), not by wall-clock hour.
     - cron: "20 0,6,12,18 * * *"
   workflow_dispatch:
 

@@ -38,7 +38,8 @@ import polars as pl
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from wpq import metrics
-from wpq.config import DATA_DIR, STATIONS_FILE
+from wpq.collect import raw_run_times
+from wpq.config import STATIONS_FILE
 
 WINDOW_DAYS = 7
 BASELINE_WEEKS = 4
@@ -72,18 +73,6 @@ def source_specs(stations: list[dict]) -> dict[str, dict]:
         "nrw_rain": dict(per_day=4, kind="obs", stations=ids("nrw_gauge")),
         "metar": dict(per_day=4, kind="obs", stations=ids("metar")),
     }
-
-
-def raw_run_times(source: str) -> list[datetime]:
-    """Successful collector runs, from raw file paths (a failed fetch writes no file)."""
-    out = []
-    for f in sorted((DATA_DIR / "raw" / source).glob("*/*.json.gz")):
-        try:
-            stamp = f.parent.name + f.name.removesuffix(".json.gz")
-            out.append(datetime.strptime(stamp, "%Y-%m-%d%H%MZ"))
-        except ValueError:
-            continue
-    return out
 
 
 def worst(*statuses: str) -> str:

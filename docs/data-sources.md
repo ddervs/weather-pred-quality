@@ -46,7 +46,9 @@ perturbed starting conditions, and the spread of the members expresses forecast
 uncertainty. The fraction of members predicting rain is a real probability-of-
 precipitation (PoP) — the raw material for the calibration side of this project.
 
-Fetched only on the 00Z/12Z collector runs (to bound repo growth), 3 variables
+Fetched ~2/day — whenever the previous ensemble file is ≥10 h old, bounding repo
+growth without trusting GitHub's cron punctuality (a wall-clock-hour gate never
+fired: scheduled runs arrive hours late; caught 2026-07-06) — 3 variables
 (`temperature_2m`, `precipitation`, `wind_speed_10m`), all members
 (`ukmo_global_ensemble_20km`, member 0 = control).
 

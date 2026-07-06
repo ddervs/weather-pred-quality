@@ -8,7 +8,7 @@ data/
 ├── stations.json               # the fixed station registry (committed)
 ├── raw/                        # live collector output, immutable (committed)
 │   ├── ukmo_forecast/YYYY-MM-DD/HHMMZ.json.gz
-│   ├── ukmo_ensemble/YYYY-MM-DD/HHMMZ.json.gz      # 00Z/12Z runs only
+│   ├── ukmo_ensemble/YYYY-MM-DD/HHMMZ.json.gz      # ~2/day (self-scheduled, ≥10 h gap)
 │   ├── land_obs/YYYY-MM-DD/HHMMZ.json.gz
 │   ├── ea_rain/YYYY-MM-DD/HHMMZ.json.gz
 │   ├── sepa_rain/YYYY-MM-DD/HHMMZ.json.gz           # since 2026-07-05

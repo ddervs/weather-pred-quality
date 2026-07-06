@@ -18,6 +18,12 @@ but only after everything works privately** (his explicit preference, 2026-07-04
 
 ## Current state (as of 2026-07-05, second chunk)
 
+- **Ensemble collection was silently dead — fixed** (2026-07-06, found by the
+  source-down alert's very first firing): GitHub cron runs arrive HOURS late
+  (00:20 → 04:41 observed), so wpq.collect's `hour in (0,1,12,13)` ensemble
+  gate never matched a scheduled run; the only ensemble file ever was from a
+  manual dispatch. Now self-scheduled: collect ensembles when the last
+  ensemble raw file is ≥10 h old (~2/day). Assume ALL cron times are +2–5 h.
 - **Weekly health email wired in** (2026-07-05, side task): `weekly-report.yml`
   (Mondays 06:20 UTC) runs `scripts/make_weekly_report.py` → RAG tables for the
   7 collector sources (run completeness + station coverage) and for model ×
@@ -112,7 +118,9 @@ but only after everything works privately** (his explicit preference, 2026-07-04
 - `data/stations.json` — 33 fixed stations (Met Office geohash + EA gauge + METAR
   triples). Locations = decoded geohash centres. Do not move stations casually.
 - Collector live: `.github/workflows/collect.yml` runs `wpq.collect` every 6 h
-  (ensembles only on 00Z/12Z runs), commits gzipped JSON to `data/raw/{source}/{date}/{HHMM}Z.json.gz`.
+  (ensembles ~2/day, self-scheduled since 2026-07-06 — the original 00Z/12Z
+  hour gate never fired because GitHub cron runs arrive hours late), commits
+  gzipped JSON to `data/raw/{source}/{date}/{HHMM}Z.json.gz`.
   Sources: `ukmo_forecast`, `ukmo_ensemble`, `land_obs`, `ea_rain`, `metar`.
   Secret `MET_OFFICE_LAND_OBS_API_KEY` is set in the repo (also in local `.env`).
 - Backfill DONE (`scripts/backfill_ukmo.py`): `data/backfill/prev_runs/` (UKMO leads

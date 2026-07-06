@@ -20,10 +20,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from wpq.config import DATA_DIR
+from wpq.collect import raw_run_times
 
 # 6-hourly sources: >26h = 4+ consecutive failures (2h slack for cron jitter).
-# Ensembles run 2/day: >38h = 3+ missed slots.
+# Ensembles self-schedule at >=10h gaps: >38h = clearly dead.
 STALE_HOURS_DEFAULT = 26
 STALE_HOURS = {"ukmo_ensemble": 38}
 SOURCES = ["ukmo_forecast", "ukmo_ensemble", "land_obs", "ea_rain",
@@ -33,14 +33,7 @@ LABEL = "source-alert"
 
 
 def latest_run(source: str) -> datetime | None:
-    files = sorted((DATA_DIR / "raw" / source).glob("*/*.json.gz"))
-    for f in reversed(files):
-        try:
-            stamp = f.parent.name + f.name.removesuffix(".json.gz")
-            return datetime.strptime(stamp, "%Y-%m-%d%H%MZ")
-        except ValueError:
-            continue
-    return None
+    return max(raw_run_times(source), default=None)
 
 
 def gh(*args: str) -> str:

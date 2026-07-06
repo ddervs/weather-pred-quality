@@ -2,7 +2,11 @@
 
 Writes data/raw/{source}/{YYYY-MM-DD}/{HHMM}Z.json.gz. Payloads carry their own
 init/valid timestamps, so late or duplicate runs are harmless (dedup happens at
-normalisation). Ensembles are fetched only on the 00Z/12Z runs to bound repo growth.
+normalisation). Ensembles are fetched when the last ensemble file is >=10 h old
+(~2/day, bounding repo growth). This is deliberately NOT a wall-clock-hour gate:
+GitHub cron runs arrive hours late (observed 00:20 -> 04:41), so an `hour in
+(0,1,12,13)` check never matched on scheduled runs and silently collected no
+ensembles at all (caught by the source-down alert, 2026-07-06).
 
 Run: uv run python -m wpq.collect          (all sources)
      uv run python -m wpq.collect --no-ensemble | --force-ensemble
@@ -11,14 +15,29 @@ Run: uv run python -m wpq.collect          (all sources)
 import gzip
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from wpq.config import DATA_DIR, STATIONS_FILE
 from wpq import fetchers
 
+ENSEMBLE_MIN_GAP_HOURS = 10
+
 
 def load_stations() -> list[dict]:
     return json.loads(STATIONS_FILE.read_text())["stations"]
+
+
+def raw_run_times(source: str) -> list[datetime]:
+    """Successful collector runs (naive UTC), parsed from raw file paths -
+    a failed fetch writes no file, so path timestamps are the success record."""
+    out = []
+    for f in sorted((DATA_DIR / "raw" / source).glob("*/*.json.gz")):
+        try:
+            stamp = f.parent.name + f.name.removesuffix(".json.gz")
+            out.append(datetime.strptime(stamp, "%Y-%m-%d%H%MZ"))
+        except ValueError:
+            continue
+    return out
 
 
 def write_raw(source: str, payload, now: datetime) -> str:
@@ -33,9 +52,14 @@ def write_raw(source: str, payload, now: datetime) -> str:
 def main() -> None:
     now = datetime.now(timezone.utc)
     stations = load_stations()
-    include_ensemble = "--force-ensemble" in sys.argv or (
-        "--no-ensemble" not in sys.argv and now.hour in (0, 1, 12, 13)
-    )
+    if "--force-ensemble" in sys.argv:
+        include_ensemble = True
+    elif "--no-ensemble" in sys.argv:
+        include_ensemble = False
+    else:
+        last = max(raw_run_times("ukmo_ensemble"), default=None)
+        include_ensemble = last is None or now.replace(tzinfo=None) - last >= timedelta(
+            hours=ENSEMBLE_MIN_GAP_HOURS)
 
     results, failures = [], []
 

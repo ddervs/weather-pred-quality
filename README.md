@@ -20,7 +20,7 @@ hover for station details). Regenerate after registry changes with
   (Met Office land-obs station + EA/SEPA/NRW rain gauge + METAR airport bundles)
 - [`wpq/`](wpq/) — collector fetching UKMO forecasts + MOGREPS ensembles (via Open-Meteo),
   Met Office observations, EA/SEPA/NRW rain gauges and METARs into `data/raw/` as gzipped JSON,
-  every 6 h via [GitHub Actions](.github/workflows/collect.yml) (ensembles at 00Z/12Z)
+  every 6 h via [GitHub Actions](.github/workflows/collect.yml) (ensembles ~2/day)
 - [`scripts/backfill_ukmo.py`](scripts/backfill_ukmo.py) — one-off 2024→now backfill of
   lead-stratified UKMO forecasts + ERA5 truth; [`scripts/smoke_metrics.py`](scripts/smoke_metrics.py)
   sanity-checks skill-vs-lead on it
