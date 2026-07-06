@@ -48,7 +48,13 @@ casually** — continuity matters. Top level: `built_at`, `notes`, `stations` (l
   "region": "wm",          // Met Office region code (se, sw, yh, nw, wm, gr, …)
   "country": "England",    // one of the four UK nations — main segmentation key
   "ea_gauge": {            // nearest live EA rain gauge, or null (all non-England, 9 stations)
-    "station_reference": "3340", "lat": 52.446, "lon": -1.746, "distance_km": 5.5
+    "station_reference": "3340",
+    "measure": "3340-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+                           // pinned rainfall TOTALS measure — some gauges publish extra
+                           // intensity/duplicate series; the collector fetches ONLY this
+    "period": 900,         // seconds per reading: 900, or 3600 for the two hourly-only
+                           // gauges (Cambridge E5731, Lincoln E5721)
+    "lat": 52.446, "lon": -1.746, "distance_km": 5.5
   },
   "metar": { "icao": "EGBB", "distance_km": 5.0 },  // nearest airport ≤40 km, or null (8 stations)
   "sepa_gauge": {          // nearest live SEPA rain gauge — Scotland only, null elsewhere
@@ -85,9 +91,21 @@ UTC). Shapes, and the gotchas that cost real time to learn:
   airports, 2026-07-05), `wind_direction` (compass string), `visibility` (m), `mslp`
   (hPa), `pressure_tendency`, `weather_code` (int — rain occurrence comes from this).
   **No rain amounts.** Dud stations return timestamp-only entries.
-- **`ea_rain/`** — `{station_reference: {items: [{dateTime, value, …}]}}`; `value` = mm
-  per 15-min interval. Gauges go dormant; values are occasionally negative or absurd —
-  QC happens at normalisation (clamp `< 0` to 0, discard `> 20 mm/15 min`).
+- **`ea_rain/`** — `{station_reference: {items: [{dateTime, value, measure, …}]}}`;
+  `value` = mm total for the interval ending at `dateTime`. Gauges go dormant; values
+  are occasionally negative or absurd — QC happens at normalisation (clamp `< 0` to 0,
+  discard `> 20 mm/15 min`, `> 80 mm/h` for hourly gauges). **Measure gotchas (found
+  2026-07-06 when the weekly report flagged silent gauges)**: two gauges (Cambridge
+  `E5731`, Lincoln `E5721`) publish **hourly** totals only (`…-t-1_h-mm`) — the
+  4-slice hour rule silently discarded everything they sent; six others publish a
+  second rainfall series (`…-i-15_min` intensity or `rainfall-water`) that doubled the
+  row rate and truncated the 30 h window (`_limit=120`) — and at four of those
+  (Brighton, Dover, Newcastle, Sheffield) the *totals* series is **dormant** and the
+  twin is the live one (`i` vs `t` values agree to ~5% on a rainy Leeds sample —
+  per-stamp tip-attribution jitter, sums match). Since 2026-07-06 the collector
+  fetches one pinned measure per gauge (`ea_gauge.measure`, chosen by reading
+  freshness, not name — `fetch_ea_rain_measure`); the loader also filters older
+  whole-station payloads by that measure, so history was recovered retroactively.
 - **`sepa_rain/`** — SEPA KiWIS response: a *list* of series objects, one per gauge,
   each `{station_no, station_name, ts_id, ts_unitsymbol, rows, columns, data}` where
   `data` = `[["2026-07-05T17:45:00.000Z", 0.2], …]` — mm per 15-min interval, timestamp

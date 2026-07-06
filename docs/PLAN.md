@@ -29,8 +29,11 @@ but only after everything works privately** (his explicit preference, 2026-07-04
   `source-alert` issue when a source has been dead 24 h+ (dedup: one per source
   per 7 days). Also fixed: collect.yml's commit step now `if: always()`, so one
   failing source no longer loses the other sources' data. All RAG thresholds
-  live at the top of make_weekly_report.py. First report already flagged the
-  Cambridge + Lincoln EA gauges as silent — worth checking / repairing.
+  live at the top of make_weekly_report.py. First report flagged Cambridge +
+  Lincoln EA gauges silent → root cause found and fixed 2026-07-06: they are
+  hourly-only gauges (and 6 others had duplicate intensity series truncating
+  the fetch window). EA measures now pinned per gauge in stations.json
+  (`scripts/add_ea_measures.py`); details in docs/data-layout.md.
 
 - **SEPA rain gauges wired in** (2026-07-05, side task — was "later chunk 2"):
   Scotland rain-amount truth now live. SEPA's KiWIS API (`timeseries.sepa.org.uk`,

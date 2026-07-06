@@ -50,9 +50,7 @@ def main() -> None:
         step("ukmo_ensemble", lambda: fetchers.fetch_ukmo_ensemble(stations))
     step("land_obs", lambda: fetchers.fetch_land_obs([s["id"] for s in stations]))
     step("ea_rain", lambda: {
-        s["ea_gauge"]["station_reference"]: fetchers.fetch_ea_readings(
-            s["ea_gauge"]["station_reference"]
-        )
+        s["ea_gauge"]["station_reference"]: fetchers.fetch_ea_readings(s["ea_gauge"])
         for s in stations if s.get("ea_gauge")
     })
     sepa_ts_ids = [s["sepa_gauge"]["ts_id"] for s in stations if s.get("sepa_gauge")]

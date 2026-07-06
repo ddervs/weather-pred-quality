@@ -122,9 +122,14 @@ def source_health(name: str, spec: dict, tables: dict[str, pl.DataFrame],
         return row | dict(status=worst(run_status, RED),
                           stations=f"0/{len(spec['stations'])}")
     # denominator = the source's own observed span (obs) or run count (fcst), so
-    # collection lag - a run-completeness/staleness problem - doesn't read as spottiness
+    # collection lag - a run-completeness/staleness problem - doesn't read as spottiness.
+    # Span starts at the MEDIAN station's first timestamp: one deep-history outlier
+    # (EA's hourly gauges return 5 days per fetch) must not dilute everyone else.
     if spec["kind"] == "obs":
-        denom = max(1.0, (df[time_col].max() - df[time_col].min()).total_seconds() / 3600 + 1)
+        span_start = df.group_by("station_id").agg(
+            pl.col(time_col).min()).get_column(time_col).median()
+        df = df.filter(pl.col(time_col) >= span_start)
+        denom = max(1.0, (df[time_col].max() - span_start).total_seconds() / 3600 + 1)
     else:
         denom = df[time_col].n_unique()
     per = dict(df.group_by("station_id").agg(pl.col(time_col).n_unique()).iter_rows())

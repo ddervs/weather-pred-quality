@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from wpq.config import STATIONS_FILE
 from wpq.fetchers import (
     fetch_ea_gauges_near,
-    fetch_ea_readings,
+    fetch_ea_rain_measure,
     fetch_land_obs,
     fetch_metar,
     fetch_nearest_land_station,
@@ -77,26 +77,24 @@ METAR_AIRPORTS = [
 
 
 def pick_live_gauge(lat: float, lon: float) -> dict | None:
-    """Nearest EA gauge with a reading in the last 24h (England only in practice)."""
+    """Nearest EA gauge with a live rainfall series (England only in practice)."""
     gauges = fetch_ea_gauges_near(lat, lon)
     with_pos = [g for g in gauges if g.get("lat") and g.get("long")]
     with_pos.sort(key=lambda g: haversine_km(lat, lon, g["lat"], g["long"]))
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
     for gauge in with_pos[:4]:
         ref = gauge.get("stationReference")
         if not ref:
             continue
         try:
-            readings = fetch_ea_readings(ref, limit=4).get("items", [])
+            # pins the live rainfall series AND proves the gauge is alive - a
+            # None means every series is stale/absent (see fetch_ea_rain_measure)
+            measure = fetch_ea_rain_measure(ref)
         except Exception:
             continue
-        fresh = any(
-            datetime.fromisoformat(r["dateTime"].replace("Z", "+00:00")) > cutoff
-            for r in readings if r.get("dateTime")
-        )
-        if fresh:
+        if measure:
             return {
                 "station_reference": ref,
+                **measure,
                 "lat": gauge["lat"],
                 "lon": gauge["long"],
                 "distance_km": round(haversine_km(lat, lon, gauge["lat"], gauge["long"]), 1),

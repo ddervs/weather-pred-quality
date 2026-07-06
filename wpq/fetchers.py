@@ -103,10 +103,40 @@ def fetch_ea_gauges_near(lat: float, lon: float, dist_km: int = 25) -> list[dict
     return data.get("items", [])
 
 
-def fetch_ea_readings(station_reference: str, limit: int = 120) -> dict:
-    """Latest 15-min rainfall readings for one gauge (120 readings = 30h)."""
+def fetch_ea_rain_measure(station_reference: str) -> dict | None:
+    """Resolve which rainfall series to collect: {'measure': id-tail, 'period': s}.
+
+    Gauges publish 1-3 rainfall measures and the obvious one is often DEAD (four
+    of ours have a dormant `t-15_min` totals series while a `rainfall-water` or
+    `i-15_min` twin reports fine; two are hourly-only `t-1_h`). So: walk the
+    candidates in preference order (15-min totals > 15-min instantaneous > hourly
+    totals) and pin the first whose latest reading is < 48 h old. None = gauge dead.
+    """
+    items = _get_json(f"{EA_FLOOD}/id/stations/{station_reference}/measures")["items"]
+    tails = [m["@id"].split("/")[-1] for m in items if m.get("parameter") == "rainfall"]
+    rank = lambda t: ("-t-15_min-" not in t, "tipping_bucket" not in t,
+                      "-i-15_min-" not in t)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=48)
+    for tail in sorted(tails, key=rank):
+        r = _get_json(f"{EA_FLOOD}/id/measures/{tail}/readings",
+                      {"_sorted": "", "_limit": 1}).get("items", [])
+        if r and datetime.fromisoformat(r[0]["dateTime"].replace("Z", "+00:00")) > cutoff:
+            return {"measure": tail, "period": 3600 if "-t-1_h-" in tail else 900}
+        time.sleep(0.2)
+    return None
+
+
+def fetch_ea_readings(gauge: dict, limit: int = 120) -> dict:
+    """Latest readings for one gauge's pinned measure (120 x 15 min = 30h).
+
+    Falls back to the whole-station endpoint if the registry entry predates
+    measure pinning (normalize filters by measure either way).
+    """
+    if gauge.get("measure"):
+        return _get_json(f"{EA_FLOOD}/id/measures/{gauge['measure']}/readings",
+                         {"_sorted": "", "_limit": limit})
     return _get_json(
-        f"{EA_FLOOD}/id/stations/{station_reference}/readings",
+        f"{EA_FLOOD}/id/stations/{gauge['station_reference']}/readings",
         {"_sorted": "", "_limit": limit, "parameter": "rainfall"},
     )
 

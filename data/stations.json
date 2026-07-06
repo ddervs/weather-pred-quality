@@ -73,7 +73,9 @@
     "station_reference": "3340",
     "lat": 52.446032,
     "lon": -1.746153,
-    "distance_km": 5.5
+    "distance_km": 5.5,
+    "measure": "3340-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGBB",
@@ -94,7 +96,9 @@
     "station_reference": "2321SO",
     "lat": 50.83729,
     "lon": -0.377415,
-    "distance_km": 6.1
+    "distance_km": 6.1,
+    "measure": "2321SO-rainfall-water-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGKA",
@@ -115,7 +119,9 @@
     "station_reference": "E6340",
     "lat": 51.553112,
     "lon": -2.55595,
-    "distance_km": 0.3
+    "distance_km": 0.3,
+    "measure": "E6340-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGGD",
@@ -136,7 +142,9 @@
     "station_reference": "E5731",
     "lat": 52.226854,
     "lon": -0.464875,
-    "distance_km": 0.2
+    "distance_km": 0.2,
+    "measure": "E5731-rainfall-tipping_bucket_raingauge-t-1_h-mm",
+    "period": 3600
    },
    "metar": null,
    "sepa_gauge": null,
@@ -154,7 +162,9 @@
     "station_reference": "51124",
     "lat": 51.207152,
     "lon": -3.536655,
-    "distance_km": 22.6
+    "distance_km": 22.6,
+    "measure": "51124-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGFF",
@@ -182,7 +192,9 @@
     "station_reference": "606299",
     "lat": 54.899013,
     "lon": -2.953493,
-    "distance_km": 4.0
+    "distance_km": 4.0,
+    "measure": "606299-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": null,
    "sepa_gauge": null,
@@ -213,7 +225,9 @@
     "station_reference": "1403SE",
     "lat": 51.130603,
     "lon": 1.318089,
-    "distance_km": 2.0
+    "distance_km": 2.0,
+    "measure": "1403SE-rainfall-water-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGMD",
@@ -257,7 +271,9 @@
     "station_reference": "45184",
     "lat": 50.728619,
     "lon": -3.475599,
-    "distance_km": 5.4
+    "distance_km": 5.4,
+    "measure": "45184-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGTE",
@@ -321,7 +337,9 @@
     "station_reference": "041238",
     "lat": 53.867134,
     "lon": -0.367439,
-    "distance_km": 4.4
+    "distance_km": 4.4,
+    "measure": "041238-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGNJ",
@@ -365,7 +383,9 @@
     "station_reference": "075497",
     "lat": 53.815189,
     "lon": -1.823015,
-    "distance_km": 2.7
+    "distance_km": 2.7,
+    "measure": "075497-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGNM",
@@ -386,7 +406,9 @@
     "station_reference": "E5721",
     "lat": 53.175194,
     "lon": -0.524002,
-    "distance_km": 0.2
+    "distance_km": 0.2,
+    "measure": "E5721-rainfall-tipping_bucket_raingauge-t-1_h-mm",
+    "period": 3600
    },
    "metar": {
     "icao": "EGXW",
@@ -407,7 +429,9 @@
     "station_reference": "550148",
     "lat": 53.410189,
     "lon": -3.10942,
-    "distance_km": 10.0
+    "distance_km": 10.0,
+    "measure": "550148-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGGP",
@@ -428,7 +452,9 @@
     "station_reference": "247540TP",
     "lat": 51.479469,
     "lon": -0.451216,
-    "distance_km": 0.4
+    "distance_km": 0.4,
+    "measure": "247540TP-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGLL",
@@ -449,7 +475,9 @@
     "station_reference": "560557",
     "lat": 53.431001,
     "lon": -2.352893,
-    "distance_km": 8.3
+    "distance_km": 8.3,
+    "measure": "560557-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGCC",
@@ -470,7 +498,9 @@
     "station_reference": "017220",
     "lat": 55.01952,
     "lon": -1.881881,
-    "distance_km": 0.3
+    "distance_km": 0.3,
+    "measure": "017220-rainfall-tipping_bucket_raingauge-i-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGNT",
@@ -491,7 +521,9 @@
     "station_reference": "E24756",
     "lat": 52.494069,
     "lon": 1.157581,
-    "distance_km": 4.1
+    "distance_km": 4.1,
+    "measure": "E24756-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGSH",
@@ -512,7 +544,9 @@
     "station_reference": "3766",
     "lat": 53.005795,
     "lon": -1.251101,
-    "distance_km": 0.3
+    "distance_km": 0.3,
+    "measure": "3766-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGNX",
@@ -533,7 +567,9 @@
     "station_reference": "264254TP",
     "lat": 51.617635,
     "lon": -1.115281,
-    "distance_km": 1.6
+    "distance_km": 1.6,
+    "measure": "264254TP-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": null,
    "sepa_gauge": null,
@@ -551,7 +587,9 @@
     "station_reference": "48102",
     "lat": 50.223298,
     "lon": -5.305022,
-    "distance_km": 2.2
+    "distance_km": 2.2,
+    "measure": "48102-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": null,
    "sepa_gauge": null,
@@ -569,7 +607,9 @@
     "station_reference": "47155",
     "lat": 50.416367,
     "lon": -4.126049,
-    "distance_km": 7.0
+    "distance_km": 7.0,
+    "measure": "47155-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": null,
    "sepa_gauge": null,
@@ -587,7 +627,9 @@
     "station_reference": "078922",
     "lat": 53.60567,
     "lon": -1.766463,
-    "distance_km": 6.8
+    "distance_km": 6.8,
+    "measure": "078922-rainfall-tipping_bucket_raingauge-i-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGNM",
@@ -608,7 +650,9 @@
     "station_reference": "1121",
     "lat": 52.718322,
     "lon": -2.717219,
-    "distance_km": 8.9
+    "distance_km": 8.9,
+    "measure": "1121-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGOS",
@@ -629,7 +673,9 @@
     "station_reference": "E13580",
     "lat": 51.103128,
     "lon": -1.562184,
-    "distance_km": 5.2
+    "distance_km": 5.2,
+    "measure": "E13580-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGHI",
@@ -673,7 +719,9 @@
     "station_reference": "054604",
     "lat": 54.32908,
     "lon": -1.456389,
-    "distance_km": 14.6
+    "distance_km": 14.6,
+    "measure": "054604-rainfall-tipping_bucket_raingauge-t-15_min-mm",
+    "period": 900
    },
    "metar": {
     "icao": "EGNV",

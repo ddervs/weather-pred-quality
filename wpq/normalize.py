@@ -25,8 +25,11 @@ Variable vocabulary and units — ALL unit conversion happens here:
     precip_mm     mm accumulated over the hour PRECEDING valid_time (Open-Meteo
                   convention). EA/SEPA/NRW 15-min readings (all mm totals for the
                   15 min ENDING at their timestamp) are summed into that window; an
-                  hour needs all four 15-min slices to count. QC: negative readings
-                  clamped to 0, single readings > 20 mm/15min discarded as absurd.
+                  hour needs all four 15-min slices to count. Two EA gauges
+                  (Cambridge E5731, Lincoln E5721) publish hourly totals instead -
+                  their single reading IS the hour (ea_gauge.period == 3600).
+                  QC: negative readings clamped to 0, single readings > 20 mm/15min
+                  (80 mm/h for hourly gauges) discarded as absurd.
     wind_ms       m/s. Open-Meteo/ERA5 km/h / 3.6; METAR knots * 0.514444;
                   land_obs already m/s (verified empirically 2026-07-05 against
                   co-located METAR at 8 airports - values match kt->m/s conversion).
@@ -269,10 +272,14 @@ def load_land_obs(stations: list[dict]) -> pl.DataFrame:
                                keep="last", maintain_order=True)
 
 
-def gauge_hours(source: str, readings: dict[tuple[str, datetime], float]) -> pl.DataFrame:
-    """QC'd 15-min gauge readings -> hourly precip_mm + rain_occurred rows.
+def gauge_hours(source: str, readings: dict[tuple[str, datetime], float],
+                slices: dict[str, int] | None = None) -> pl.DataFrame:
+    """QC'd gauge readings -> hourly precip_mm + rain_occurred rows.
 
-    Hour ending H covers readings at H-45, H-30, H-15, H+0; needs all four slices.
+    Readings are totals for the interval ENDING at their timestamp. Hour ending H
+    covers readings at H-45, H-30, H-15, H+0; an hour only counts when all its
+    slices are present — 4 for 15-min gauges (the default), 1 for hourly gauges
+    (`slices` maps station_id -> count; two EA gauges are hourly-only).
     Shared by EA (England), SEPA (Scotland) and NRW (Wales) — same tipping-bucket
     semantics.
     """
@@ -282,7 +289,7 @@ def gauge_hours(source: str, readings: dict[tuple[str, datetime], float]) -> pl.
         hours.setdefault((sid, bucket), []).append(v)
     rows = Rows(OBS_SCHEMA)
     for (sid, hour), vals in hours.items():
-        if len(vals) != 4:
+        if len(vals) != (slices or {}).get(sid, 4):
             continue
         mm = sum(vals)
         rows.add(source=source, station_id=sid, valid_time=hour,
@@ -292,30 +299,37 @@ def gauge_hours(source: str, readings: dict[tuple[str, datetime], float]) -> pl.
     return rows.frame()
 
 
-def qc_15min(v) -> float | None:
-    """Tipping-bucket QC: non-numeric/None dropped, negatives clamped, >20mm absurd."""
+def qc_15min(v, max_mm: float = EA_MAX_MM_PER_15MIN) -> float | None:
+    """Tipping-bucket QC: non-numeric/None dropped, negatives clamped, >max absurd."""
     if v is None or not isinstance(v, (int, float)):
         return None
     v = max(float(v), 0.0)  # tipping buckets report spurious negatives
-    return None if v > EA_MAX_MM_PER_15MIN else v
+    return None if v > max_mm else v
 
 
 def load_ea_rain(stations: list[dict]) -> pl.DataFrame:
-    ref_to_sid = {s["ea_gauge"]["station_reference"]: s["id"]
-                  for s in stations if s.get("ea_gauge")}
+    gauges = {s["ea_gauge"]["station_reference"]: (s["id"], s["ea_gauge"])
+              for s in stations if s.get("ea_gauge")}
+    slices = {sid: 1 if g.get("period") == 3600 else 4 for sid, g in gauges.values()}
     readings: dict[tuple[str, datetime], float] = {}
     for path in sorted((DATA_DIR / "raw" / "ea_rain").glob("*/*.json.gz")):
         for ref, obj in read_gz(path).items():
-            sid = ref_to_sid.get(ref)
-            if sid is None or not obj:
+            if ref not in gauges or not obj:
                 continue
+            sid, gauge = gauges[ref]
+            # keep only the pinned totals measure: whole-station payloads (pre
+            # 2026-07-06) interleave intensity/duplicate series at the same stamps
+            want = gauge.get("measure")
+            max_mm = EA_MAX_MM_PER_15MIN * (4 if slices[sid] == 1 else 1)
             for item in obj.get("items", []):
-                v = qc_15min(item.get("value"))
+                if want and not item.get("measure", "").endswith(want):
+                    continue
+                v = qc_15min(item.get("value"), max_mm)
                 if v is None:
                     continue
                 t = datetime.fromisoformat(item["dateTime"].replace("Z", ""))
                 readings[(sid, t)] = v  # keep-last across overlapping fetches
-    return gauge_hours("ea_rain", readings)
+    return gauge_hours("ea_rain", readings, slices)
 
 
 def load_sepa_rain(stations: list[dict]) -> pl.DataFrame:
