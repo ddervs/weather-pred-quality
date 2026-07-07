@@ -32,7 +32,8 @@
   .wpq .chip:hover { color: var(--ink); }
   .wpq .chip.on { background: var(--ink); color: var(--surface); border-color: var(--ink); font-weight: 600; }
   .wpq .chip .x { margin-left: 7px; opacity: .7; }
-  .wpq .chips .lbl { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-right: 2px; }
+  .wpq .chips .lbl { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-right: 2px; min-width: 132px; }
+  .wpq #chips-rain { margin-top: -8px; }
 
   .wpq .grid-a { display: grid; grid-template-columns: minmax(0,5fr) minmax(0,7fr); gap: 18px; align-items: start; }
   .wpq .grid-b { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; align-items: start; }
@@ -109,6 +110,7 @@
   </header>
 
   <div class="chips" id="chips"><span class="lbl">Scope</span></div>
+  <div class="chips" id="chips-rain"><span class="lbl">Rain event (mm/h)</span></div>
 
   <div class="grid-a">
     <div class="col">
@@ -251,28 +253,26 @@ $("hdr-sub").textContent =
 
 const NATIONS = [...new Set(P.stations.map(s => s.country))].sort();
 function renderChips() {
-  const c = $("chips");
-  c.querySelectorAll(".chip, .dyn").forEach(n => n.remove());
-  const mk = (label, on, fn, extra) => {
+  const mk = (parent, label, on, fn, extra) => {
     const b = document.createElement("button");
     b.className = "chip" + (on ? " on" : "");
     b.innerHTML = label + (extra || "");
     b.addEventListener("click", fn);
-    c.appendChild(b);
+    parent.appendChild(b);
+    return b;
   };
-  mk("All UK", scope.type === "uk", () => setScope({ type: "uk" }));
+  const c = $("chips");
+  c.querySelectorAll(".chip").forEach(n => n.remove());
+  mk(c, "All UK", scope.type === "uk", () => setScope({ type: "uk" }));
   for (const n of NATIONS)
-    mk(n, scope.type === "nation" && scope.name === n,
+    mk(c, n, scope.type === "nation" && scope.name === n,
        () => setScope({ type: "nation", name: n }));
   if (scope.type === "station")
-    mk(scopeLabel(), true, () => setScope({ type: "uk" }), "<span class='x'>&times;</span>");
-  const sep = document.createElement("span");
-  sep.className = "lbl dyn"; sep.style.marginLeft = "14px"; sep.textContent = "Rain event (mm/h)";
-  c.appendChild(sep);
-  for (const [key, label, long] of BUCKETS) {
-    mk(label, bucket === key, () => { bucket = key; render(); });
-    c.lastChild.title = long;
-  }
+    mk(c, scopeLabel(), true, () => setScope({ type: "uk" }), "<span class='x'>&times;</span>");
+  const r = $("chips-rain");
+  r.querySelectorAll(".chip").forEach(n => n.remove());
+  for (const [key, label, long] of BUCKETS)
+    mk(r, label, bucket === key, () => { bucket = key; render(); }).title = long;
 }
 
 /* ---------- generic charts ---------- */
