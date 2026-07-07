@@ -169,14 +169,17 @@ domain `weather.danialdervovic.com` set on the Pages site; DNS = CNAME record
 the cert is issued. Also 2026-07-07: dashboard card-alignment CSS fix (grids
 stretch; map card fills its column; grid-b SVGs bottom-anchored).
 
-## NEXT CHUNK: live-forecast reliability page (Danial's ask 2026-07-06 — big, staged)
+## NEXT CHUNK: forecast reliability page (Danial's ask 2026-07-06 — big, staged)
 
-Goal: not just scoring the past — for each station, pull the CURRENT UKMO forecast
-in the browser and translate it into calibrated event statements backed by our
-verification history: "forecast says 2.3 mm at 15:00 tomorrow → when it said that
-in 2024-26, ≥1 mm actually fell 64 % of the time; 90 % of temps landed within
-±1.7 °C of the number shown". Static page, no server: api.open-meteo.com sends
-CORS `*`, so the page can fetch live client-side (attribution required, £0).
+**DESIGN CHANGE 2026-07-07 (Danial): NO live-forecast fetching.** The original idea
+was to pull the current UKMO forecast client-side (api.open-meteo.com sends CORS `*`)
+and annotate it. Danial's call: now the site is public, per-visitor live queries
+would eat our Open-Meteo limits — instead the **user inputs the forecast they have
+been given** (e.g. "my app says 2.3 mm at 15:00 tomorrow") and we evaluate it
+against our verification history: "when the model said that in 2024-26, ≥1 mm
+actually fell 64 % of the time; 90 % of temps landed within ±1.7 °C of the number
+shown". Still a static page, no server, £0 — the lookup tables ship as JSON and
+everything happens in the browser on user-typed input.
 
 Stages (one session each-ish):
 1. **Conditional reliability tables** from the backfill: P(obs event | forecast
@@ -184,17 +187,22 @@ Stages (one session each-ish):
    half-widths from conformal.parquet. Precompute in Python → compact JSON
    (mind payload size; nation-level first, station-level only if it stays lean).
    Watch small-n cells (heavy rain × long lead × station is sparse — back off
-   to nation or wider bucket, and say so in the UI).
-2. **The page**: per-station "next 5 days" strip — live Open-Meteo fetch
-   (`ukmo_seamless`, same params as the collector), apply the lookup tables,
-   render event probabilities + intervals. Graceful degradation: no network →
-   history-only view. Extend dashboard or sibling page (`docs/live.html`);
-   reuse the map + scope chrome.
+   to nation or wider bucket, and say so in the UI). Unchanged by the design
+   change — the tables are the product either way.
+2. **The page**: user picks a station (or nation), enters the forecast they've
+   been given — variable, value, and when it's for (lead derived from that) —
+   and the page applies the lookup tables to render event probabilities +
+   intervals. Input UX matters: forgiving units/formats, sensible defaults.
+   No network calls at all. Extend dashboard or sibling page (`docs/live.html`
+   → better name now: `docs/evaluate.html`?); reuse the map + scope chrome.
+   Caveat to surface in the UI: our history calibrates the *raw UKMO model via
+   Open-Meteo* — a forecast from the Met Office app (post-processed) or another
+   provider isn't the same stream, so statements are "when the UKMO model said
+   this…", not a guarantee about the user's app.
 3. **Calibrated PoP upgrade** (once ensembles span ~4 wks, from 2026-07-06):
    member-fraction PoP corrected by an isotonic/reliability-curve fit against
    the accumulating live-obs record; replaces the binary-conditioned tables.
-Caveats: conditional tables are ERA5-truth until live obs mature (label it);
-verify Open-Meteo ToS attribution line on the page before any public hosting.
+Caveats: conditional tables are ERA5-truth until live obs mature (label it).
 
 ## Later chunks (in order, one per session-ish)
 
