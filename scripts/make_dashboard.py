@@ -57,6 +57,13 @@ def curve(df: pl.DataFrame, model: str, variable: str, metric: str) -> list:
     return [round(vals[d], 3) if vals.get(d) is not None else None for d in LEADS]
 
 
+def base_rate(df: pl.DataFrame, variable: str) -> float | None:
+    sub = df.filter((pl.col("model") == "ukmo_seamless")
+                    & (pl.col("variable") == variable))
+    n, s = sub["n"].sum(), sub["sum_obs"].sum()
+    return round(s / n, 4) if n else None
+
+
 def scope_curves(df: pl.DataFrame) -> dict:
     return {
         "temp": {m: curve(df, m, "temp_c", "mae") for m in MODELS},
@@ -66,6 +73,9 @@ def scope_curves(df: pl.DataFrame) -> dict:
         "ets": {key: {m: curve(df, m, var, "ets")
                       for m in ("ukmo_seamless", "persistence")}
                 for key, var in RAIN_BUCKETS},
+        # how often each event actually happens at this scope (pooled base rate,
+        # ERA5 truth) - context for near-zero skill on rare events
+        "ebase": {key: base_rate(df, var) for key, var in RAIN_BUCKETS},
     }
 
 

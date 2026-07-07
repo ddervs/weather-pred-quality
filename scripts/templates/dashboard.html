@@ -520,10 +520,14 @@ function render() {
     band: isUK && P.ci.temp ? { ...P.ci.temp, color: "var(--s1)" } : null,
   });
   const bcur = cur.ets[bucket] || cur.ets.any;
+  const eb = (cur.ebase || {})[bucket];
+  const ebTxt = eb == null ? "" :
+    " · happens in " + (eb * 100).toFixed(eb < 0.01 ? 2 : 1) + "% of hours here (~" +
+    Math.round(eb * 24 * 365) + " h/yr)";
   lineChart($("card-ets"), {
     title: "Rain skill (ETS) by lead — " + lbl,
-    sub: "rain " + bucketText() + " vs " + P.truth + " · higher is better · no climatology "
-      + "line (it never forecasts rain — see definitions)"
+    sub: "rain " + bucketText() + " vs " + P.truth + ebTxt
+      + " · higher is better · no climatology line (see definitions)"
       + (isUK && bucket === "any"
         ? " · 95% CIs ±0.005 — narrower than the line; hover for values" : ""),
     unit: "ETS",
