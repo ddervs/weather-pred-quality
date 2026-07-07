@@ -154,6 +154,21 @@ variables in wpq/metrics.py (model + persistence + climatology, amount-reporting
 truth sources only) with a "Rain event" chip group in the dashboard ("Any" = 0.1).
 Finding: ETS collapses with severity (day-0: 0.34 any → 0.08 at ≥4 mm/h; ~0 by day 4-5).
 
+## DONE 2026-07-07: published — public GitHub Pages at weather.danialdervovic.com
+
+Danial's call 2026-07-07: repo public, dashboard live. Same pattern as
+restaurant-review-map: `.github/workflows/pages.yml` (workflow-built Pages) stages
+docs/dashboard.html as index.html. Triggers: `workflow_run` on **metrics** (its
+GITHUB_TOKEN commits don't fire `push` workflows — that's why the chain trigger),
+plus push-on-dashboard-change and manual dispatch, so the site refreshes with the
+weekly metrics rebuild. Template cleaned for public: "(draft, private)" removed,
+footer attribution added (Open-Meteo CC BY 4.0 — the ToS caveat from the live-page
+chunk — plus OGL/Met Office/EA/NRW, SEPA, Copernicus ERA5, repo link). Custom
+domain `weather.danialdervovic.com` set on the Pages site; DNS = CNAME record
+`weather` → `ddervs.github.io` in Squarespace (Danial manages). Enforce HTTPS once
+the cert is issued. Also 2026-07-07: dashboard card-alignment CSS fix (grids
+stretch; map card fills its column; grid-b SVGs bottom-anchored).
+
 ## NEXT CHUNK: live-forecast reliability page (Danial's ask 2026-07-06 — big, staged)
 
 Goal: not just scoring the past — for each station, pull the CURRENT UKMO forecast

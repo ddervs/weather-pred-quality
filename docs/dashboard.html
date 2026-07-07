@@ -42,12 +42,13 @@
   .wpq .chips .lbl { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-right: 2px; min-width: 132px; }
   .wpq #chips-rain { margin-top: -8px; }
 
-  .wpq .grid-a { display: grid; grid-template-columns: minmax(0,5fr) minmax(0,7fr); gap: 18px; align-items: start; }
-  .wpq .grid-b { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; align-items: start; }
+  .wpq .grid-a { display: grid; grid-template-columns: minmax(0,5fr) minmax(0,7fr); gap: 18px; }
+  .wpq .grid-b { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
   @media (max-width: 900px) { .wpq .grid-a, .wpq .grid-b { grid-template-columns: 1fr; } }
   .wpq .col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 
-  .wpq .chart-card { padding: 14px 16px 10px; }
+  .wpq .chart-card { padding: 14px 16px 10px; display: flex; flex-direction: column; }
+  .wpq .grid-b .chart-card svg.chart { margin-top: auto; }
   .wpq .chart-card h2 { font-size: 14.5px; font-weight: 650; margin: 0; }
   .wpq .chart-card .sub { color: var(--muted); font-size: 12.5px; margin: 2px 0 4px; }
   .wpq .leg-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 6px 0 2px; font-size: 12.5px; color: var(--ink-2); }
@@ -69,8 +70,8 @@
   .wpq details.twin th:first-child, .wpq details.twin td:first-child { text-align: left; }
   .wpq details.twin th { color: var(--muted); font-weight: 600; }
 
-  .wpq .map-card { position: relative; padding: 10px; }
-  .wpq .map-card svg { display: block; width: 100%; height: auto; }
+  .wpq .map-card { position: relative; padding: 10px; flex: 1; display: flex; flex-direction: column; }
+  .wpq .map-card svg { display: block; width: 100%; flex: 1 1 auto; min-height: 0; }
   .wpq .coast { fill: var(--land); stroke: var(--land-line); stroke-width: .8; }
   .wpq .stn { stroke: var(--surface); stroke-width: 1.6; cursor: pointer; }
   .wpq .stn.sel { stroke: var(--ink); stroke-width: 2.2; }
@@ -101,6 +102,7 @@
   .wpq table.score tbody tr.sel { background: color-mix(in srgb, var(--ink) 7%, transparent); }
   .wpq table.score tbody tr.sel td:first-child { font-weight: 650; }
   .wpq footer { color: var(--muted); font-size: 12.5px; }
+  .wpq footer a { color: inherit; text-decoration: underline; }
   .wpq details.defs summary { cursor: pointer; font-size: 13.5px; color: var(--ink-2); }
   .wpq details.defs summary b { color: var(--ink); font-weight: 650; }
   .wpq details.defs dl { display: grid; grid-template-columns: max-content 1fr;
@@ -112,7 +114,7 @@
 </style>
 <div class="wpq"><div class="wrap">
   <header>
-    <h1>UK forecast verification — dashboard <span style="color:var(--muted);font-weight:500">(draft, private)</span></h1>
+    <h1>UK forecast verification — dashboard</h1>
     <p id="hdr-sub"></p>
   </header>
 
@@ -196,7 +198,12 @@
     retrospectively). Click a map dot, chip or table row to change scope.
     Bootstrap CI bands (station-day blocks) shown at UK scope only. MAE = CRPS for a
     deterministic forecast. Conformal intervals: calibrated on 2024, coverage scored on
-    2025–26. Draft — not published.</footer>
+    2025–26.<br>Weather data by <a href="https://open-meteo.com/">Open-Meteo.com</a>
+    (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).
+    ERA5: Copernicus Climate Change Service. Contains Met Office, Environment Agency and
+    Natural Resources Wales data © Crown copyright (Open Government Licence) and
+    SEPA data © Scottish Environment Protection Agency.
+    Code &amp; data: <a href="https://github.com/ddervs/weather-pred-quality">ddervs/weather-pred-quality</a>.</footer>
   <div class="tip" id="tip"></div>
 </div></div>
 <script>

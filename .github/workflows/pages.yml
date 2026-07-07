@@ -1,0 +1,53 @@
+# Deploy the dashboard to GitHub Pages (weather.danialdervovic.com).
+# Same pattern as ddervs/restaurant-review-map: workflow-built Pages.
+name: pages
+
+on:
+  # The metrics workflow regenerates docs/dashboard.html and commits it with
+  # GITHUB_TOKEN - those commits do NOT fire `push` workflows, so chain off the
+  # workflow instead (the restaurant-review-map trick).
+  workflow_run:
+    workflows: ["metrics"]
+    types:
+      - completed
+  # Manual/local edits to the dashboard still deploy on push.
+  push:
+    branches: [main]
+    paths:
+      - docs/dashboard.html
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # when chained off metrics, only deploy if that run succeeded
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Stage site (dashboard only, served as index)
+        run: |
+          mkdir -p _site
+          cp docs/dashboard.html _site/index.html
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
