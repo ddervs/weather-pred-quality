@@ -256,9 +256,10 @@ const scopeNation = () => scope.type === "uk" ? "UK"
   : (P.stations.find(s => s.id === scope.id) || {}).country;
 
 /* ---------- header / chips ---------- */
-$("hdr-sub").textContent =
+$("hdr-sub").innerHTML =
   "UKMO deterministic forecasts scored against " + P.truth + " at 33 stations, " +
-  P.period + ", forecast leads 0–5 days. Select a nation or station to re-cut every panel.";
+  '<span style="white-space:nowrap">' + P.period + '</span>' +
+  ", forecast leads 0–5 days. Select a nation or station to re-cut every panel.";
 
 const NATIONS = [...new Set(P.stations.map(s => s.country))].sort();
 function renderChips() {
