@@ -184,11 +184,13 @@
     </table>
   </div>
 
-  <footer>UKMO <code>ukmo_seamless</code> vs ERA5 reanalysis truth for the 2024–26 backfill.
-    Ground-station truth (Met Office obs, EA/SEPA/NRW rain gauges, METAR) has been collecting
-    since 2026-07-04 and will appear here as a truth-source toggle once enough accumulates;
-    ERA5 stays as truth for the pre-collection history (station obs aren't freely available
-    retrospectively). Click a map dot, chip or table row to change scope.
+  <footer>UKMO <code>ukmo_seamless</code> scored against ERA5 reanalysis truth up to
+    2026-06-30 (the backfill period) and against live ground-station truth (Met Office obs,
+    EA/SEPA/NRW rain gauges, METAR) from 2026-07-01 onward — station obs aren't freely
+    available retrospectively, so ERA5 stands in for the history. The two truths aren't
+    identical (point obs carry siting noise a reanalysis smooths over), and the live share
+    of the record is still small. Conformal and Brier-skill cards are ERA5-only for now.
+    Click a map dot, chip or table row to change scope.
     Bootstrap CI bands (station-day blocks) shown at UK scope only. MAE = CRPS for a
     deterministic forecast. Conformal intervals: calibrated on 2024, coverage scored on
     2025–26.<br>Weather data by <a href="https://open-meteo.com/">Open-Meteo.com</a>
@@ -566,7 +568,7 @@ function render() {
   });
   colChart($("card-skill"), {
     title: "Rain Brier skill vs climatology — UK",
-    sub: "any rain (≥0.1 mm/h), binary forecast, all-UK, " + P.truth
+    sub: "any rain (≥0.1 mm/h), binary forecast, all-UK, ERA5"
       + " truth · negative = worse than base rate",
     unit: "skill", vals: P.brier.skill,
     color: v => v >= 0 ? "var(--s1)" : "var(--neg)",

@@ -169,6 +169,16 @@ domain `weather.danialdervovic.com` set on the Pages site; DNS = CNAME record
 the cert is issued. Also 2026-07-07: dashboard card-alignment CSS fix (grids
 stretch; map card fills its column; grid-b SVGs bottom-anchored).
 
+**2026-07-09 (Danial's ask): dashboard truth stitched — ERA5 → live obs.** The
+headline period had been hardcoded to the backfill end (2026-06-30). Now
+make_dashboard.py pools ERA5-truth months before `CUTOVER = 2026-07-01` with
+live-obs-truth months from then on (per-cell dedup by `TRUTH_RANK`:
+nrw > sepa > ea > land_obs > metar — 191 station-months were multi-truthed);
+period label derived from the newest `data/raw/land_obs/` date, so it advances
+with each weekly rebuild. Conformal + Brier cards stay ERA5-only (calibration.py
+filters era5) and are labelled as such; footer explains the seam. Temp-MAE
+regression check still passes (0.70→1.63 °C).
+
 ## NEXT CHUNK: forecast reliability page (Danial's ask 2026-07-06 — big, staged)
 
 **DESIGN CHANGE 2026-07-07 (Danial): NO live-forecast fetching.** The original idea

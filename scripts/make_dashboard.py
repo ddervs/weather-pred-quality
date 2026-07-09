@@ -12,6 +12,7 @@ Run: uv run scripts/make_dashboard.py [--screenshot [out.png]]
 import json
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -30,6 +31,12 @@ MODELS = ["ukmo_seamless", "persistence", "climatology_dayofyear"]
 # bucket key (shown in the UI) -> metrics variable; "any" is the 0.1 mm/h default
 RAIN_BUCKETS = [("any", "rain_occurred"), ("0.5", "rain_ge_0.5"),
                 ("1", "rain_ge_1"), ("2", "rain_ge_2"), ("4", "rain_ge_4")]
+# ERA5 backfill ends 2026-06-30; live station obs are truth from here on
+CUTOVER = date(2026, 7, 1)
+# a station-month cell can be truthed by several live sources (e.g. land_obs +
+# metar temp at airports, gauge + land_obs rain) - keep only the best-ranked one
+TRUTH_RANK = {"nrw_rain": 1, "sepa_rain": 2, "ea_rain": 3,
+              "land_obs": 4, "metar": 5}
 
 WRAPPER = """<!DOCTYPE html>
 <html lang="en">
@@ -84,11 +91,20 @@ def main() -> None:
     nations = pl.DataFrame(stations_meta).select(
         pl.col("id").alias("station_id"), "country"
     )
-    m = (
-        pl.read_parquet(METRICS_FILE)
-        .filter((pl.col("truth_source") == "era5") & (pl.col("lead_days") <= 5))
-        .join(nations, on="station_id")
+    all_m = pl.read_parquet(METRICS_FILE).filter(pl.col("lead_days") <= 5)
+    era5 = all_m.filter(
+        (pl.col("truth_source") == "era5") & (pl.col("month") < CUTOVER)
     )
+    cell = ["model", "variable", "lead_days", "station_id", "month"]
+    live = (
+        all_m.filter((pl.col("truth_source") != "era5")
+                     & (pl.col("month") >= CUTOVER))
+        .with_columns(pl.col("truth_source").replace_strict(TRUTH_RANK)
+                      .alias("rank"))
+        .filter(pl.col("rank") == pl.col("rank").min().over(cell))
+        .drop("rank")
+    )
+    m = pl.concat([era5, live]).join(nations, on="station_id")
 
     curves = {"UK": scope_curves(m)}
     for nation in sorted(m["country"].unique()):
@@ -148,8 +164,11 @@ def main() -> None:
         band["lo"][r["lead_days"]] = round(r["ci_lo"], 3)
         band["hi"][r["lead_days"]] = round(r["ci_hi"], 3)
 
+    # period end = latest collected day (land_obs is fetched on every collect run)
+    last_day = max(p.name for p in (DATA_DIR / "raw" / "land_obs").iterdir()
+                   if p.is_dir())
     payload = {
-        "period": "2024-01-01 → 2026-06-30", "truth": "ERA5",
+        "period": f"2024-01-01 → {last_day}", "truth": "ERA5 + station obs",
         "stations": stations, "curves": curves, "conformal": conformal,
         "brier": brier, "ci": ci,
     }
