@@ -154,7 +154,8 @@ def window_stats(fcst: pl.DataFrame, obs: pl.DataFrame,
 
 
 def metric_of(variable: str) -> str:
-    return "brier" if variable == "rain_occurred" else "mae"
+    # rain_occurred and the rain_ge_* buckets are binary events (metrics.add_rain_events)
+    return "brier" if variable.startswith("rain") else "mae"
 
 
 def model_health(week: pl.DataFrame, base: pl.DataFrame) -> list[dict]:
@@ -193,8 +194,9 @@ def model_health(week: pl.DataFrame, base: pl.DataFrame) -> list[dict]:
 def fmt(v, variable: str) -> str:
     if v is None:
         return "-"
-    unit = "" if variable == "rain_occurred" else f" {UNITS[variable]}"
-    return f"{v:.3f}{unit}" if variable == "rain_occurred" else f"{v:.2f}{unit}"
+    if variable.startswith("rain"):  # binary events: unitless Brier scores
+        return f"{v:.3f}"
+    return f"{v:.2f} {UNITS[variable]}"
 
 
 def build_report(now: datetime) -> str:
