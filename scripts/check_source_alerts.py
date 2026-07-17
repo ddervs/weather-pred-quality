@@ -1,8 +1,11 @@
 """Hard-red alert: open (and instantly close) a GitHub issue when a collector
-source has produced no raw file for 24h+ (i.e. every run failed for a day).
+source has produced no raw file for 24h+ (i.e. every run failed for a day),
+or a single EA gauge has been missing from ea_rain payloads for as long
+(collect tolerates partial EA outages, so a dead gauge no longer fails runs).
 
 Runs after every collect (collect.yml, if: always()). Staleness is read from
-data/raw file paths - a failed fetch writes no file - so the check is stateless.
+data/raw file paths - a failed fetch writes no file, and since per-gauge
+isolation a failed gauge writes no key - so the check is stateless.
 Dedup: a source already named in a `source-alert` issue from the last 7 days is
 not re-alerted; the Monday weekly report is the persistent record. The issue
 @-mentions $OWNER so GitHub emails it (scotbet pattern), then closes it.
@@ -11,6 +14,7 @@ Without GH_TOKEN this is a dry run: it prints what it would do and exits 0.
 It never exits non-zero - alerting must not change the collect job's status.
 """
 
+import gzip
 import json
 import os
 import subprocess
@@ -21,6 +25,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from wpq.collect import raw_run_times
+from wpq.config import DATA_DIR, STATIONS_FILE
 
 # 6-hourly sources: >26h = 4+ consecutive failures (2h slack for cron jitter).
 # Ensembles self-schedule at >=10h gaps: >38h = clearly dead.
@@ -30,10 +35,42 @@ SOURCES = ["ukmo_forecast", "ukmo_ensemble", "land_obs", "ea_rain",
            "sepa_rain", "nrw_rain", "metar"]
 DEDUP_DAYS = 7
 LABEL = "source-alert"
+EA_SCAN_FILES = 60  # newest-first raw files to search for a gauge (~2 weeks)
 
 
 def latest_run(source: str) -> datetime | None:
     return max(raw_run_times(source), default=None)
+
+
+def stale_ea_gauges(now: datetime) -> list[tuple[str, datetime | None, float]]:
+    """EA gauges absent from every ea_rain payload for STALE_HOURS_DEFAULT+.
+
+    Payloads are keyed by station_reference and a failed gauge writes no key,
+    so the newest file containing the key is the gauge's last success.
+    """
+    stations = json.loads(STATIONS_FILE.read_text())["stations"]
+    refs = {s["ea_gauge"]["station_reference"] for s in stations if s.get("ea_gauge")}
+    files = sorted((DATA_DIR / "raw" / "ea_rain").glob("*/*.json.gz"), reverse=True)
+    last_seen: dict[str, datetime] = {}
+    for f in files[:EA_SCAN_FILES]:
+        if last_seen.keys() >= refs:
+            break
+        try:
+            stamp = datetime.strptime(f.parent.name + f.name.removesuffix(".json.gz"),
+                                      "%Y-%m-%d%H%MZ")
+            payload = json.loads(gzip.decompress(f.read_bytes()))
+        except (ValueError, OSError, json.JSONDecodeError):
+            continue
+        for ref in refs - last_seen.keys():
+            if ref in payload:
+                last_seen[ref] = stamp
+    out = []
+    for ref in sorted(refs):
+        last = last_seen.get(ref)
+        age = (now - last).total_seconds() / 3600 if last else float("inf")
+        if age > STALE_HOURS_DEFAULT:
+            out.append((f"ea_rain/{ref}", last, age))
+    return out
 
 
 def gh(*args: str) -> str:
@@ -42,7 +79,11 @@ def gh(*args: str) -> str:
 
 
 def recently_alerted() -> set[str]:
-    """Sources named in a source-alert issue title within the dedup window."""
+    """Names (sources or ea_rain/<gauge>) alerted within the dedup window.
+
+    Exact-name parse of the comma-joined title, so `ea_rain/3340` and a
+    whole-source `ea_rain` alert never dedup each other.
+    """
     out = gh("issue", "list", "--label", LABEL, "--state", "all",
              "--limit", "50", "--json", "title,createdAt")
     cutoff = datetime.now(timezone.utc) - timedelta(days=DEDUP_DAYS)
@@ -50,7 +91,7 @@ def recently_alerted() -> set[str]:
     for issue in json.loads(out):
         created = datetime.fromisoformat(issue["createdAt"].replace("Z", "+00:00"))
         if created >= cutoff:
-            hit |= {s for s in SOURCES if s in issue["title"]}
+            hit |= set(issue["title"].removeprefix("Source alert: ").split(", "))
     return hit
 
 
@@ -63,8 +104,10 @@ def main() -> None:
         age = (now - last).total_seconds() / 3600 if last else float("inf")
         if age > limit:
             stale.append((source, last, age))
+    if not any(s == "ea_rain" for s, _, _ in stale):  # whole source down covers it
+        stale += stale_ea_gauges(now)
     if not stale:
-        print(f"all {len(SOURCES)} sources fresh")
+        print(f"all {len(SOURCES)} sources fresh, all EA gauges reporting")
         return
 
     for source, last, age in stale:
@@ -81,7 +124,7 @@ def main() -> None:
             print(f"already alerted within {DEDUP_DAYS} days - skipping")
             return
         names = ", ".join(s for s, _, _ in fresh)
-        lines = [f"Every collect run has failed for 24h+ on: **{names}**.", "",
+        lines = [f"No data collected for 24h+ from: **{names}**.", "",
                  "| Source | Last successful run | Stale for |", "|--|--|--|"]
         for source, last, age in fresh:
             when = f"{last:%Y-%m-%d %H:%M}Z" if last else "never"

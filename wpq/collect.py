@@ -61,7 +61,7 @@ def main() -> None:
         include_ensemble = last is None or now.replace(tzinfo=None) - last >= timedelta(
             hours=ENSEMBLE_MIN_GAP_HOURS)
 
-    results, failures = [], []
+    results, failures, warnings = [], [], []
 
     def step(name: str, fn):
         try:
@@ -75,7 +75,10 @@ def main() -> None:
     step("land_obs", lambda: fetchers.fetch_land_obs([s["id"] for s in stations]))
     def fetch_ea_rain() -> dict:
         # one gauge failing must not lose the others; a partial payload is still
-        # written, and the failed gauge is surfaced so the run alerts
+        # written. A missed gauge is a warning, not a failure: the 30h readings
+        # window means the next successful run backfills it, and a gauge dead
+        # 26h+ is caught per-gauge by check_source_alerts. All gauges failing
+        # means the source is down - that still fails the run.
         payload, errs = {}, []
         for s in stations:
             gauge = s.get("ea_gauge")
@@ -88,7 +91,7 @@ def main() -> None:
         if errs:
             if not payload:
                 raise RuntimeError("; ".join(errs))
-            failures.append(f"ea_rain ({len(payload)} gauges ok): " + "; ".join(errs))
+            warnings.append(f"ea_rain ({len(payload)} gauges ok): " + "; ".join(errs))
         return payload
 
     step("ea_rain", fetch_ea_rain)
@@ -106,6 +109,10 @@ def main() -> None:
           f"| ensemble={'yes' if include_ensemble else 'skipped'}")
     for line in results:
         print(" ", line)
+    if warnings:
+        print("WARNINGS (non-fatal, self-healing):")
+        for line in warnings:
+            print(" ", line)
     if failures:
         print("FAILURES:")
         for line in failures:
