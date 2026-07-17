@@ -38,9 +38,21 @@ ENSEMBLE_VARS = ["temperature_2m", "precipitation", "wind_speed_10m"]
 _session = requests.Session()
 _session.headers["User-Agent"] = USER_AGENT
 
+# EA served 502/503/500 bursts for days (2026-07-12..15) and SEPA threw a one-off
+# 429; both cleared on their own, so transient upstream trouble gets a couple of
+# spaced retries before we give up and let the collector record the failure.
+_RETRY_STATUSES = {429, 500, 502, 503, 504}
+_RETRY_DELAYS = (5, 30)
+
 
 def _get_json(url: str, params: dict | None = None, headers: dict | None = None) -> dict | list:
-    resp = _session.get(url, params=params, headers=headers, timeout=90)
+    for delay in _RETRY_DELAYS:
+        resp = _session.get(url, params=params, headers=headers, timeout=90)
+        if resp.status_code not in _RETRY_STATUSES:
+            break
+        time.sleep(delay)
+    else:
+        resp = _session.get(url, params=params, headers=headers, timeout=90)
     resp.raise_for_status()
     return resp.json()
 

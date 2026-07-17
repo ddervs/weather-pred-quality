@@ -73,10 +73,25 @@ def main() -> None:
     if include_ensemble:
         step("ukmo_ensemble", lambda: fetchers.fetch_ukmo_ensemble(stations))
     step("land_obs", lambda: fetchers.fetch_land_obs([s["id"] for s in stations]))
-    step("ea_rain", lambda: {
-        s["ea_gauge"]["station_reference"]: fetchers.fetch_ea_readings(s["ea_gauge"])
-        for s in stations if s.get("ea_gauge")
-    })
+    def fetch_ea_rain() -> dict:
+        # one gauge failing must not lose the others; a partial payload is still
+        # written, and the failed gauge is surfaced so the run alerts
+        payload, errs = {}, []
+        for s in stations:
+            gauge = s.get("ea_gauge")
+            if not gauge:
+                continue
+            try:
+                payload[gauge["station_reference"]] = fetchers.fetch_ea_readings(gauge)
+            except Exception as exc:
+                errs.append(f"{gauge['station_reference']}: {type(exc).__name__}: {exc}")
+        if errs:
+            if not payload:
+                raise RuntimeError("; ".join(errs))
+            failures.append(f"ea_rain ({len(payload)} gauges ok): " + "; ".join(errs))
+        return payload
+
+    step("ea_rain", fetch_ea_rain)
     sepa_ts_ids = [s["sepa_gauge"]["ts_id"] for s in stations if s.get("sepa_gauge")]
     if sepa_ts_ids:  # all gauges in one KiWIS call
         step("sepa_rain", lambda: fetchers.fetch_sepa_readings(sepa_ts_ids))
