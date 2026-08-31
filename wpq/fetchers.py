@@ -41,18 +41,25 @@ _session.headers["User-Agent"] = USER_AGENT
 # EA served 502/503/500 bursts for days (2026-07-12..15) and SEPA threw a one-off
 # 429; both cleared on their own, so transient upstream trouble gets a couple of
 # spaced retries before we give up and let the collector record the failure.
+# SEPA also drops the connection outright rather than answering (ConnectTimeout
+# 2026-08-15, RemoteDisconnected 2026-08-27..30, five red runs and ~15h of lost
+# Scottish rainfall): those never reach a status code, so they are retried too.
 _RETRY_STATUSES = {429, 500, 502, 503, 504}
+_RETRY_EXCEPTIONS = (requests.ConnectionError, requests.Timeout)
 _RETRY_DELAYS = (5, 30)
 
 
 def _get_json(url: str, params: dict | None = None, headers: dict | None = None) -> dict | list:
-    for delay in _RETRY_DELAYS:
-        resp = _session.get(url, params=params, headers=headers, timeout=90)
-        if resp.status_code not in _RETRY_STATUSES:
-            break
-        time.sleep(delay)
-    else:
-        resp = _session.get(url, params=params, headers=headers, timeout=90)
+    last = len(_RETRY_DELAYS)  # one attempt per delay, plus a final un-slept one
+    for attempt in range(last + 1):
+        try:
+            resp = _session.get(url, params=params, headers=headers, timeout=90)
+            if attempt == last or resp.status_code not in _RETRY_STATUSES:
+                break
+        except _RETRY_EXCEPTIONS:
+            if attempt == last:
+                raise
+        time.sleep(_RETRY_DELAYS[attempt])
     resp.raise_for_status()
     return resp.json()
 
